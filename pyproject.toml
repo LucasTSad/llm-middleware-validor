@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools >= 68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "prompt-validator"
+version = "0.1.0"
+description = "Middleware serverless de auditoria, otimizacao e validacao de prompts para LLMs corporativas"
+requires-python = ">= 3.11"
+dependencies = [
+    "pydantic >= 2.7",
+    "tiktoken >= 0.7"
+]
+
+[project.optional-dependencies]
+api = ["fastapi >= 0.115", "uvicorn >= 0.30", "httpx >= 0.27"]
+aws = ["boto3 >= 1.34", "mangum >= 0.17"]
+dev = ["pytest >= 8.0", "pytest-benchmark >= 4.0", "hypothesis >= 6.100"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
