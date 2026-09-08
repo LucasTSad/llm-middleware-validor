@@ -97,4 +97,4 @@ class GuardConfig(BaseModel):
     encoding_name: str = Field(default = "o200k_base")
     price_per_1k_tokens_usd: float = Field(default = 0.0, ge = 0.0)
 
-    enabled_detectors: tuple[str, ...] = ("budget", "pii", "injection", "null")
+    enabled_detectors: tuple[str, ...] = ("budget", "pii", "injection")

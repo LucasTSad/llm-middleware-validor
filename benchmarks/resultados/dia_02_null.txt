@@ -1,0 +1,16 @@
+Data e Hora: 2026-09-08 17:20:41.365608
+Python: 3.14.3
+Plataforma: Windows-11-10.0.26200-SP0
+Execuções (N): 10000
+Aquecimento: 500
+Detectores Ativos: ('null',)
+Tamanho do Texto: 313 caracteres
+
+Limitações: Granularidade de relógio (~100ns Windows) e ambiente local de processo único.
+Avaliação de Meta: A latência máxima aceitável é de 15 ms no P95.
+
+Tempo Externo -> P50: 2000 ns (0.0020 ms) | P95: 4100 ns (0.0041 ms) | P99: 4500 ns (0.0045 ms)
+Tempo Interno -> P50: 300 ns (0.0003 ms) | P95: 600 ns (0.0006 ms) | P99: 700 ns (0.0007 ms)
+Diferença no P95: 3500 ns (0.0035 ms)
+
+Interpretação: A diferença no P95 reflete o custo de construir e validar o objeto Decision, representando a maior parte do overhead estrutural do pipeline.
