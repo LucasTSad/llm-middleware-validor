@@ -36,7 +36,7 @@ class Finding(BaseModel):
     rule_id: str = Field(description = "Identificador estavel da regra, ex: 'pii.cpf.v1'")
     category: Category
     severity: Severity
-    start: int = Field(ge = 0, description = "Indice inicial no texto normalizado")
+    start: int = Field(ge = 0, description = "Indice inicial no texto original")
     end: int = Field(gt = 0, description = "Indice final, exclusivo")
     matched_type: str = Field(description = "Tipo concreto, ex: 'cpf', 'api_key'")
     score: float = Field(default = 1.0, ge = 0.0, le = 1.0)
@@ -45,6 +45,31 @@ class Finding(BaseModel):
     def validate_span(self) -> Self:
         if self.end <= self.start:
             raise ValueError (f"span invalido: end ({self.end}) deve ser maior que start ({self.start})")
+        return self
+
+class NormalizedText(BaseModel):
+
+    model_config = ConfigDict(frozen=True)
+
+    original: str
+    normalized: str
+    offset_map: tuple[int, ...]
+
+    @model_validator(mode = "after")
+    def validate_offset_map(self) -> Self:
+        if len(self.offset_map) != len(self.normalized):
+            raise ValueError(f"Offset_map tem tamanho ({len(self.offset_map)}), porem o normalized tem ({len(self.normalized)})")
+        
+        if self.offset_map:
+            limit = len(self.original)
+            out = [x for x in self.offset_map if not 0 <= x < limit]
+            if out:
+                raise ValueError(f"Offset_map tem valores invalidos: {out[:5]}, enquanto o original tem {limit} caracteres, indices invalidos: 0 .. {limit - 1}")
+
+        for i in range(len(self.offset_map) - 1):
+            if self.offset_map[i] > self.offset_map[i + 1]:
+                raise ValueError(f"Offset_map nao eh crescente na posicao {i}: {self.offset_map[i]} > {self.offset_map[i + 1]}")
+            
         return self
 
 class Decision(BaseModel):
