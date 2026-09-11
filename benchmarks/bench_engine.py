@@ -1,25 +1,30 @@
 """
-O que este script mede?
-O overhead estrutural do pipeline: o custo de existir, sem nenhuma detecção real.
+Benchmark do Engine.
 
-Por que medir isso agora?
-Para separar o custo do pipeline do custo das regex, que serão medidas depois.
+Execução:
+    python benchmarks/bench_engine.py
 
-O que cada medição inclui?
-A externa cobre a chamada completa, incluindo a construção e validação da Decision.
-A interna é o que o próprio engine cronometra: execução dos detectores e decisão de política,
-terminando antes da Decision ser construída.
+1. O que este script mede?
+    O overhead estrutural do pipeline: o custo de existir, sem nenhuma detecção real.
 
-Que limitações a medição tem?
-Relógio com granularidade de 100 ns no Windows: medições de poucos tiques têm erro relativo alto.
-Máquina local, processo único, não é o ambiente Lambda.
+2. Por que medir isso agora?
+    Para separar o custo do pipeline do custo das regex, que serão medidas depois.
 
-Por que percentis em vez de média?
-A distribuição de latência não é simétrica: a maioria das execuções se concentra em torno de um valor baixo
-e uma minoria se estende por uma cauda longa à direita, causada por eventos esporádicos do ambiente de execução.
-A média fica entre os dois grupos sem descrever nenhum deles.
-Percentis descrevem a distribuição diretamente: o p50 informa o comportamento típico, e o p95 e o p99
-informam o comportamento da cauda, que é o que determina a experiência da fração pior atendida das requisições.
+3. O que cada medição inclui?
+    A externa cobre a chamada completa, incluindo a construção e validação da Decision.
+    A interna é o que o próprio engine cronometra: execução dos detectores e decisão de política,
+    terminando antes da Decision ser construída.
+
+4. Que limitações a medição tem?
+    Relógio com granularidade de 100 ns no Windows: medições de poucos tiques têm erro relativo alto.
+    Máquina local, processo único, não é o ambiente Lambda.
+
+5. Por que percentis em vez de média?
+    A distribuição de latência não é simétrica: a maioria das execuções se concentra em torno de um valor baixo
+    e uma minoria se estende por uma cauda longa à direita, causada por eventos esporádicos do ambiente de execução.
+    A média fica entre os dois grupos sem descrever nenhum deles.
+    Percentis descrevem a distribuição diretamente: o p50 informa o comportamento típico, e o p95 e o p99
+    informam o comportamento da cauda, que é o que determina a experiência da fração pior atendida das requisições.
 """
 
 from datetime import datetime
@@ -29,6 +34,7 @@ import time
 
 from prompt_validator.core.contracts import GuardConfig
 from prompt_validator.core.engine import Engine, build_detectors
+from calcular_percentis import calcular_percentis
 
 AQUECIMENTO = 500
 N = 10_000
@@ -53,25 +59,6 @@ for _ in range(N):
     fim = time.perf_counter_ns()
     tempo_externo.append(fim - inicio)
     tempo_interno.append(decision.elapsed_ns)
-
-
-def calcular_percentis(tempo):
-    lista_ordenada = sorted(tempo)
-    
-    n = len(lista_ordenada)
-    
-    if n == 0:
-        return None, None, None
-    
-    idx_p50 = int((n - 1) * 0.50)
-    idx_p95 = int((n - 1) * 0.95)
-    idx_p99 = int((n - 1) * 0.99)
-
-    p50 = lista_ordenada[idx_p50]
-    p95 = lista_ordenada[idx_p95]
-    p99 = lista_ordenada[idx_p99]
-
-    return p50, p95, p99
 
 
 p50_int, p95_int, p99_int = calcular_percentis(tempo_interno)

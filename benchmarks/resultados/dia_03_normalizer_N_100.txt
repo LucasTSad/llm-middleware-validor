@@ -1,0 +1,31 @@
+Data e Hora: 2026-09-11 18:36:17.232385
+Python: 3.14.3
+Plataforma: Windows-11-10.0.26200-SP0
+Execuções (N): 100
+Aquecimento: 500
+Taxa de substituição: 20%
+Semente aleatória: 42
+
+Resultados:
+100 chars | ascii | P50: 31400 ns | P95: 33700 ns | P99: 36300 ns | P95/caractere: 337.00 ns
+100 chars | invisiveis | P50: 27900 ns | P95: 30400 ns | P99: 32100 ns | P95/caractere: 304.00 ns
+100 chars | nfkc | P50: 35600 ns | P95: 38700 ns | P99: 40800 ns | P95/caractere: 387.00 ns
+Razão invisiveis/ASCII: 0.90x
+Razão NFKC/ASCII: 1.15x
+1000 chars | ascii | P50: 306000 ns | P95: 314200 ns | P99: 316900 ns | P95/caractere: 314.20 ns
+1000 chars | invisiveis | P50: 302000 ns | P95: 677400 ns | P99: 757700 ns | P95/caractere: 677.40 ns
+1000 chars | nfkc | P50: 386200 ns | P95: 835500 ns | P99: 1164300 ns | P95/caractere: 835.50 ns
+Razão invisiveis/ASCII: 2.16x
+Razão NFKC/ASCII: 2.66x
+10000 chars | ascii | P50: 6305000 ns | P95: 9199700 ns | P99: 9527100 ns | P95/caractere: 919.97 ns
+10000 chars | invisiveis | P50: 3081400 ns | P95: 5796900 ns | P99: 6609700 ns | P95/caractere: 579.69 ns
+10000 chars | nfkc | P50: 4125800 ns | P95: 9118000 ns | P99: 10515200 ns | P95/caractere: 911.80 ns
+Razão invisiveis/ASCII: 0.63x
+Razão NFKC/ASCII: 0.99x
+
+Comparação com o dia 2:
+Tamanho do TEXTO: 313 caracteres
+Dia 2 - P95 pipeline sem normalização: 4,1 µs
+(fonte: benchmarks/resultados/dia_02_null.txt, commit bca6ff8)
+Dia 3 - P95 normalização isolada: 204600 ns (204.60 µs)
+Estimativa P95 pipeline com normalização: 208.70 µs
