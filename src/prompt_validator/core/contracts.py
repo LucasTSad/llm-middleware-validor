@@ -55,6 +55,21 @@ class NormalizedText(BaseModel):
     normalized: str
     offset_map: tuple[int, ...]
 
+    def to_original_span(self, start: int, end: int) -> tuple[int, int]:
+        if start < 0:
+            raise ValueError(f"start nao pode ser negativo: {start}")
+
+        if start >= end:
+            raise ValueError(f"span invalido: start={start} >= end={end}")
+
+        if end > len(self.offset_map):
+            raise ValueError(f"end fora dos limites do texto normalizado: {end} > {len(self.offset_map)}")
+
+        original_start = self.offset_map[start]
+        original_end = self.offset_map[end - 1] + 1
+
+        return original_start, original_end
+
     @model_validator(mode = "after")
     def validate_offset_map(self) -> Self:
         if len(self.offset_map) != len(self.normalized):
@@ -118,6 +133,7 @@ class GuardConfig(BaseModel):
     block_severity: Severity = Severity.HIGH
     max_tokens: int = Field(default = 8_000, gt = 0)
     mask_mode: MaskMode = MaskMode.REVERSIBLE
+    normalize_input: bool = True
 
     encoding_name: str = Field(default = "o200k_base")
     price_per_1k_tokens_usd: float = Field(default = 0.0, ge = 0.0)

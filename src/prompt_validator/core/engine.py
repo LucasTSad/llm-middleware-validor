@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 from prompt_validator.core.contracts import (Decision, Finding, GuardConfig, Action)
 from prompt_validator.core.contracts import Category
 from prompt_validator.core.detectors.null import NullDetector
 from prompt_validator.core.detectors.base import Detector
+from prompt_validator.core.normalizer import normalize
+
 import time
 
 def decide_action(findings: list[Finding], config: GuardConfig) -> Action:
@@ -27,14 +31,16 @@ def decide_action(findings: list[Finding], config: GuardConfig) -> Action:
 
 _REGISTRY = {"null" : NullDetector}
 def build_detectors(config: GuardConfig) -> list[Detector]:
-    detector = []
+    detectors: list[Detector] = []
+
     for name in config.enabled_detectors:
         if name not in _REGISTRY:
             raise ValueError(f"Detector {name} nao encontrado \n Detectors disponiveis: {list(_REGISTRY)}")
+        
         classe = _REGISTRY[name]
-        detector.append(classe())
+        detectors.append(classe())
 
-    return detector
+    return detectors
 
 class Engine:
     def __init__(self, detectors: list[Detector], config: GuardConfig) -> None:
@@ -42,19 +48,21 @@ class Engine:
         self._detectors = detectors
 
     def analyze(self, text: str) -> Decision:
-        inicio = time.perf_counter_ns()
+        start = time.perf_counter_ns()
 
-        lista_find = []
+        normalized = normalize(text, self._config)
+
+        all_findings: list[Finding] = []
         for d in self._detectors:
-            find = d.inspect(text, self._config)
-            lista_find.extend(find)
+            findings = d.inspect(normalized, self._config)
+            all_findings.extend(findings)
 
-        action = decide_action(lista_find, self._config)
+        action = decide_action(all_findings, self._config)
 
         if action == Action.SANITIZE:
             raise NotImplementedError("mascaramento ainda não implementado")
 
-        fim = time.perf_counter_ns()
-        elapsed_ns = fim - inicio
+        end = time.perf_counter_ns()
+        elapsed_ns = end - start
 
-        return Decision(action = action, findings = tuple(lista_find), elapsed_ns = elapsed_ns)
+        return Decision(action = action, findings = tuple(all_findings), elapsed_ns = elapsed_ns)
