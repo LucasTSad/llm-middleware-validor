@@ -4,6 +4,7 @@ from prompt_validator.core.contracts import (Decision, Finding, GuardConfig, Act
 from prompt_validator.core.contracts import Category
 from prompt_validator.core.detectors.null import NullDetector
 from prompt_validator.core.detectors.base import Detector
+from prompt_validator.core.detectors.pii import PiiDetector
 from prompt_validator.core.normalizer import normalize
 
 import time
@@ -28,8 +29,10 @@ def decide_action(findings: list[Finding], config: GuardConfig) -> Action:
     
     return Action.BLOCK
 
-
-_REGISTRY = {"null" : NullDetector}
+_REGISTRY: dict[str, type[Detector]] = {
+    "null": NullDetector,
+    "pii": PiiDetector,
+}
 def build_detectors(config: GuardConfig) -> list[Detector]:
     detectors: list[Detector] = []
 
