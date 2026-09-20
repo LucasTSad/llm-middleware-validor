@@ -1,3 +1,66 @@
+"""
+Benchmark do detector de PII (CPF).
+
+Execução:
+    python benchmarks/bench_pii.py
+
+1. O que este script mede?
+   Mede o custo de execução de `PiiDetector.inspect()` em textos de
+   diferentes tamanhos e com diferentes quantidades de candidatos a CPF.
+
+2. Quais cenários são comparados?
+   - Sem candidato: texto sem sequências que correspondam ao formato de CPF.
+   - Candidato inválido: texto contendo CPFs que passam pela regex, mas
+     são rejeitados pela validação determinística do módulo 11.
+   - CPF válido: texto contendo CPFs que passam pela regex e pela
+     validação, gerando um `Finding`.
+
+   Os cenários com candidatos utilizam CPFs válidos e inválidos com o
+   mesmo formato pontuado, permitindo comparar o custo adicional da
+   validação e da criação do `Finding`.
+
+3. Como o custo é medido?
+   A normalização ocorre antes da medição e não faz parte do tempo medido.
+   Cada entrada já normalizada é processada por `inspect()` N vezes usando
+   `perf_counter_ns()`, após 500 iterações de aquecimento. São calculados
+   P50, P95 e P99.
+
+4. O que significa custo por caractere?
+   É o P50 dividido pelo tamanho do texto de entrada. Representa o custo
+   mediano por caractere da varredura naquele cenário, sendo usado
+   principalmente para avaliar o custo fixo do detector quando não há
+   candidatos.
+
+5. O que são os custos marginais?
+   O custo marginal de um candidato rejeitado é calculado pela diferença
+   entre o P50 do cenário com candidatos inválidos e o P50 do cenário sem
+   candidatos, dividida pela quantidade de candidatos.
+
+   O custo marginal de um candidato aceito é calculado da mesma forma,
+   usando o cenário com CPFs válidos. A diferença entre os custos dos
+   cenários válido e inválido aproxima o custo adicional de
+   `to_original_span` e da criação do `Finding`.
+
+6. Quais cenários e parâmetros são utilizados?
+   São avaliados textos de 100, 1.000 e 10.000 caracteres. Nos cenários
+   adversariais, um CPF é inserido a cada 5 palavras. São utilizados três CPFs 
+   válidos e três inválidos, alternados ciclicamente dentro de seus respectivos cenários.
+
+7. Quais limitações existem?
+   Os cenários são artificiais e não representam a distribuição de CPFs
+   em prompts reais. A densidade fixa de um CPF a cada 5 palavras produz
+   um cenário deliberadamente carregado para medir o custo por candidato.
+
+   O custo por caractere é uma aproximação do custo da varredura e não
+   deve ser interpretado como o custo de cada caractere individualmente,
+   pois o custo total também depende da quantidade de candidatos
+   encontrados e do caminho de validação executado.
+
+   Os resultados são dependentes do ambiente de execução. Por isso,
+   P50 é usado para caracterizar o custo do código, enquanto P95 e P99
+   ajudam a observar a influência do ambiente.
+"""
+
 from datetime import datetime
 from pathlib import Path
 import platform
@@ -33,6 +96,10 @@ CPFS_VALIDOS = (
 TAMANHOS = (100, 1_000, 10_000)
 
 A_CADA_N_PALAVRA = 5
+
+GATILHO_NS_POR_CHAR = 30
+GATILHO_ORIGINAL_NS_POR_CHAR = 155
+NORMALIZER_NS_POR_CHAR = 310
 
 CAMINHO = Path("benchmarks/resultados/dia_04_pii_N_10_000.txt")
 
@@ -138,8 +205,9 @@ linhas_relatorio = [
     f"CPFs inválidos: {CPFS_INVALIDOS}",
     f"CPFs válidos: {CPFS_VALIDOS}",
     f"Injeção: 1 CPF a cada {A_CADA_N_PALAVRA} palavras",
-    f"Gatilho ADR: 155 ns/caractere",
-    f"Custo normalizer: 310 ns/caractere",
+    f"Gatilho ADR Original: {GATILHO_ORIGINAL_NS_POR_CHAR} ns/caractere",
+    f"Gatilho ADR Atual: {GATILHO_NS_POR_CHAR} ns/caractere",
+    f"Custo normalizer: {NORMALIZER_NS_POR_CHAR} ns/caractere",
     "",
     "Resultados:",
 ]
@@ -159,14 +227,14 @@ for tamanho in TAMANHOS:
 
         if nome == "sem_candidato":    
             razao_gatilho = (
-                  resultado["p50_custo_por_caractere"] / 155
+                  resultado["p50_custo_por_caractere"] / GATILHO_NS_POR_CHAR
               ) * 100
             razao_normalizer = (
-                  resultado["p50_custo_por_caractere"] / 310
+                  resultado["p50_custo_por_caractere"] / NORMALIZER_NS_POR_CHAR
               ) * 100
 
             linhas_relatorio.append(
-                f"Razão detector/gatilho: {razao_gatilho:.2f}% | "
+                f"Razão detector/gatilho atual: {razao_gatilho:.2f}% | "
                 f"Razão detector/normalizador: {razao_normalizer:.2f}%")
     
     marginais = resultados[tamanho, "marginais"]
