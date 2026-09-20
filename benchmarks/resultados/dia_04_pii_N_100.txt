@@ -1,0 +1,28 @@
+Data e Hora: 2026-09-20 13:34:53.845157
+Python: 3.14.3
+Plataforma: Windows-11-10.0.26200-SP0
+Execuções (N): 100
+Aquecimento: 500
+Tamanhos: (100, 1000, 10000)
+CPFs inválidos: ('529.982.247-26', '374.735.750-41', '779.302.530-08')
+CPFs válidos: ('529.982.247-25', '374.735.750-40', '779.302.530-07')
+Injeção: 1 CPF a cada 5 palavras
+Gatilho ADR: 155 ns/caractere
+Custo normalizer: 310 ns/caractere
+
+Resultados:
+100 chars | sem_candidato | P50: 3100 ns | P95: 4200 ns | P99: 11200 ns | Candidatos: 0 | Findings: 0 | P50/caractere: 31.00 ns
+Razão detector/gatilho: 20.00% | Razão detector/normalizador: 10.00%
+100 chars | candidato_invalido | P50: 12500 ns | P95: 15600 ns | P99: 18000 ns | Candidatos: 2 | Findings: 0 | P50/caractere: 125.00 ns
+100 chars | cpf_valido | P50: 10800 ns | P95: 13700 ns | P99: 15600 ns | Candidatos: 2 | Findings: 2 | P50/caractere: 108.00 ns
+Marginais: custo por candidato rejeitado: 4.70 µs | custo por candidato aceito (Finding): 3.85 µs | custo de aceitar vs rejeitar: -0.85 µs
+1000 chars | sem_candidato | P50: 14600 ns | P95: 15800 ns | P99: 17800 ns | Candidatos: 0 | Findings: 0 | P50/caractere: 14.60 ns
+Razão detector/gatilho: 9.42% | Razão detector/normalizador: 4.71%
+1000 chars | candidato_invalido | P50: 121700 ns | P95: 150700 ns | P99: 206200 ns | Candidatos: 22 | Findings: 0 | P50/caractere: 121.70 ns
+1000 chars | cpf_valido | P50: 115600 ns | P95: 160100 ns | P99: 187900 ns | Candidatos: 22 | Findings: 22 | P50/caractere: 115.60 ns
+Marginais: custo por candidato rejeitado: 4.87 µs | custo por candidato aceito (Finding): 4.59 µs | custo de aceitar vs rejeitar: -0.28 µs
+10000 chars | sem_candidato | P50: 143600 ns | P95: 161800 ns | P99: 170400 ns | Candidatos: 0 | Findings: 0 | P50/caractere: 14.36 ns
+Razão detector/gatilho: 9.26% | Razão detector/normalizador: 4.63%
+10000 chars | candidato_invalido | P50: 675200 ns | P95: 711400 ns | P99: 751300 ns | Candidatos: 223 | Findings: 0 | P50/caractere: 67.52 ns
+10000 chars | cpf_valido | P50: 1116200 ns | P95: 1296600 ns | P99: 2042500 ns | Candidatos: 223 | Findings: 223 | P50/caractere: 111.62 ns
+Marginais: custo por candidato rejeitado: 2.38 µs | custo por candidato aceito (Finding): 4.36 µs | custo de aceitar vs rejeitar: 1.98 µs
