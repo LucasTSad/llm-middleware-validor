@@ -6,7 +6,10 @@ from prompt_validator.core.contracts import (
     GuardConfig, 
     Action, 
     Category, 
-    Severity)
+    Severity,
+    MaskMode
+)
+from prompt_validator.core.detectors.pii import PiiDetector
 from prompt_validator.core.engine import decide_action, build_detectors, Engine
 from prompt_validator.core.detectors.null import NullDetector
 
@@ -76,7 +79,67 @@ def test_engine_libera_findings_vazio():
     decision = engine.analyze("")
     assert decision.findings == ()
 
-def test_engine_libera_elapsed_ns_maior_que_zero():
-    engine = Engine([NullDetector()], GuardConfig())
+def test_engine_caminho_limpa_nao_inventa_texto():
+    engine = Engine([NullDetector()] , GuardConfig())
     decision = engine.analyze("meu cpf e 123.456.789-09")
+
+    assert decision.sanitized_text is None
+    assert decision.placeholders == {}
+    assert decision.action == Action.ALLOW
+
+def test_engine_pii_detector_fim_a_fim():
+    engine = Engine([PiiDetector()], GuardConfig())
+    decision = engine.analyze("Meu CPF é 529.982.247-25")
+
+    assert decision.action == Action.SANITIZE
+    assert decision.sanitized_text == "Meu CPF é [CPF_1]"
+    assert decision.placeholders == {"[CPF_1]": "529.982.247-25"}
+
+def test_engine_mask_mode_irreversible():
+    engine = Engine([PiiDetector()], GuardConfig(mask_mode = MaskMode.IRREVERSIBLE))
+    decision = engine.analyze("Meu CPF é 529.982.247-25")
+
+    assert decision.action == Action.SANITIZE
+    assert decision.sanitized_text == "Meu CPF é [CPF_1]"
+    assert decision.placeholders == {}
+
+def test_engine_finding_aponta_para_texto_original():  
+    texto = "Meu CPF é 529.982\u200b.247-25"
+
+    engine = Engine([PiiDetector()], GuardConfig())
+    decision = engine.analyze(texto)
+
+    finding = decision.findings[0]
+
+    assert texto[finding.start:finding.end] == "529.982\u200b.247-25"
+
+def test_engine_invisivel_dentro_da_pii_e_removido_com_ela():
+    engine = Engine([PiiDetector()], GuardConfig())
+    decision = engine.analyze("529.982\u200b.247-25")
+
+    assert decision.action == Action.SANITIZE
+    assert decision.sanitized_text == "[CPF_1]"
+
+def test_engine_nao_expoe_dados_sensiveis_na_decision():
+    engine = Engine([PiiDetector()], GuardConfig())
+    decision = engine.analyze("Meu CPF é 529.982.247-25")
+
+    dumped = decision.model_dump()
+
+    assert "placeholders" not in dumped
+    assert "529" not in str(dumped)
+    assert "529" not in decision.model_dump_json()
+
+def test_engine_elapsed_ns_maior_que_zero():
+    engine = Engine([PiiDetector()], GuardConfig())
+    decision = engine.analyze("meu cpf e 123.456.789-09")
+
     assert decision.elapsed_ns > 0
+
+def test_engine_nao_detecta_pii_com_detector_desabilitado():
+    config = GuardConfig(enabled_detectors=("null",))
+    engine = Engine(build_detectors(config), config)
+
+    decision = engine.analyze("Meu CPF é 529.982.247-25")
+
+    assert decision.action == Action.ALLOW

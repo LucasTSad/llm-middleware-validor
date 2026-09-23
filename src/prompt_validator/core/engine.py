@@ -6,6 +6,7 @@ from prompt_validator.core.detectors.null import NullDetector
 from prompt_validator.core.detectors.base import Detector
 from prompt_validator.core.detectors.pii import PiiDetector
 from prompt_validator.core.normalizer import normalize
+from prompt_validator.core.masker import mask
 
 import time
 
@@ -46,7 +47,7 @@ def build_detectors(config: GuardConfig) -> list[Detector]:
     return detectors
 
 class Engine:
-    def __init__(self, detectors: list[Detector], config: GuardConfig) -> None:
+    def __init__(self, detectors: list[Detector], config: GuardConfig) -> None:  
         self._config = config
         self._detectors = detectors
 
@@ -62,10 +63,17 @@ class Engine:
 
         action = decide_action(all_findings, self._config)
 
+        masked_text: str | None = None
+        placeholders: dict[str, str] = {}
+
         if action == Action.SANITIZE:
-            raise NotImplementedError("mascaramento ainda não implementado")
+            masked_text, placeholders = mask(text, tuple(all_findings), self._config)
 
         end = time.perf_counter_ns()
         elapsed_ns = end - start
 
-        return Decision(action = action, findings = tuple(all_findings), elapsed_ns = elapsed_ns)
+        return Decision(action = action,
+                         findings = tuple(all_findings), 
+                         elapsed_ns = elapsed_ns, 
+                         sanitized_text = masked_text, 
+                         placeholders = placeholders)
