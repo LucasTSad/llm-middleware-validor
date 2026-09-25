@@ -156,6 +156,16 @@ Por esse motivo, os resultados deste corpus devem ser interpretados como uma ava
 
 Uma avaliação posterior com corpus independente ou elaborado por terceiros constitui uma possível extensão do trabalho.
 
+### Limitação conhecida: falsos positivos com colchetes
+
+A expressão atualmente utilizada para a forma de delimitador entre colchetes é propositalmente ampla e pode reconhecer padrões que também aparecem legitimamente em textos técnicos, como `[OK]`, `[NOTE]`, `[TODO]`, `[ERROR]` ou referências como `array[I]`.
+
+O corpus atual contém apenas `[INST]` como exemplo legítimo desse formato. Portanto, ele **não mede de forma abrangente os falsos positivos causados por colchetes em documentação técnica, código ou textos acadêmicos**.
+
+Essa limitação é conhecida e não representa o comportamento desejado para a versão final do detector. O corpus foi mantido congelado para preservar a consistência da avaliação atual; novos casos desse tipo devem ser adicionados em uma futura versão do corpus antes de uma nova medição.
+
+Consequentemente, os resultados atuais de falsos positivos para a família `delimiter` devem ser interpretados considerando essa cobertura limitada.
+
 ## PII
 
 O corpus não contém dados pessoais reais.
