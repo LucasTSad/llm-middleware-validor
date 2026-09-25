@@ -26,16 +26,25 @@ class FakeDetector:
         return self._findings
 
 
-def finding(**kwargs) -> Finding:
-    base = {
-        "rule_id": "pii.cpf.v2",
-        "category": Category.PII_DISCLOSURE,
-        "severity": Severity.MEDIUM,
-        "start": 0,
-        "end": 11,
-        "matched_type": "cpf",
-    }
-    return Finding(**(base | kwargs))
+def finding(
+    *,
+    rule_id: str = "pii.cpf.v2",
+    category: Category = Category.PII_DISCLOSURE,
+    severity: Severity = Severity.MEDIUM,
+    start: int = 0,
+    end: int = 11,
+    matched_type: str = "cpf",
+    score: float = 1.0,
+) -> Finding:
+    return Finding(
+        rule_id=rule_id,
+        category=category,
+        severity=severity,
+        start=start,
+        end=end,
+        matched_type=matched_type,
+        score=score,
+    )
 
 
 def test_sem_findings_allow():

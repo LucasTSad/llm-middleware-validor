@@ -63,7 +63,7 @@ def build_detectors(config: GuardConfig) -> list[Detector]:
         if name not in _REGISTRY:
             raise ValueError(
                 f"Detector {name} nao encontrado \n",
-                f"Detectors disponiveis: {list(_REGISTRY)}"
+                f"Detectors disponiveis: {list(_REGISTRY)}",
             )
 
         classe = _REGISTRY[name]

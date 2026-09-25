@@ -46,7 +46,7 @@ class Finding(BaseModel):
         if self.end <= self.start:
             raise ValueError(
                 f"span invalido: end ({self.end})",
-                f" deve ser maior que start ({self.start})"
+                f" deve ser maior que start ({self.start})",
             )
         return self
 
@@ -68,7 +68,7 @@ class NormalizedText(BaseModel):
         if end > len(self.offset_map):
             raise ValueError(
                 "end fora dos limites do texto normalizado:",
-                f" {end} > {len(self.offset_map)}"
+                f" {end} > {len(self.offset_map)}",
             )
 
         original_start = self.offset_map[start]
@@ -81,7 +81,7 @@ class NormalizedText(BaseModel):
         if len(self.offset_map) != len(self.normalized):
             raise ValueError(
                 f"Offset_map tem tamanho ({len(self.offset_map)}),",
-                f" porem o normalized tem ({len(self.normalized)})"
+                f" porem o normalized tem ({len(self.normalized)})",
             )
 
         if self.offset_map:
@@ -91,14 +91,14 @@ class NormalizedText(BaseModel):
                 raise ValueError(
                     f"Offset_map tem valores invalidos: {out[:5]},",
                     f" enquanto o original tem {limit} caracteres,",
-                    f" indices invalidos: 0 .. {limit - 1}"
+                    f" indices invalidos: 0 .. {limit - 1}",
                 )
 
         for i in range(len(self.offset_map) - 1):
             if self.offset_map[i] > self.offset_map[i + 1]:
                 raise ValueError(
                     f"Offset_map nao eh crescente na posicao {i}:",
-                    f" {self.offset_map[i]} > {self.offset_map[i + 1]}"
+                    f" {self.offset_map[i]} > {self.offset_map[i + 1]}",
                 )
 
         return self
