@@ -10,25 +10,37 @@ from prompt_validator.core.masker import mask
 
 import time
 
-def decide_action(findings: list[Finding], config: GuardConfig) -> Action:
-    if findings == []:
-        return Action.ALLOW
-    
-    elif any(f.severity >= config.block_severity
-              for f in findings):
-        return Action.BLOCK 
+ACTION_PRIORITY = {
+    Action.ALLOW: 0,
+    Action.SANITIZE: 1,
+    Action.BLOCK: 2,
+}
 
-    elif any(f.score >= config.injection_threshold and
-              f.category == Category.PROMPT_INJECTION
-              for f in findings):
-            return Action.BLOCK 
-    
-    elif any(f.category == Category.PII_DISCLOSURE and 
-              f.severity < config.block_severity 
-              for f in findings ):
-            return Action.SANITIZE
-    
+
+def action_for_finding(finding: Finding, config: GuardConfig) -> Action:
+    if finding.severity >= config.block_severity:
+        return Action.BLOCK
+
+    if finding.category == Category.PROMPT_INJECTION:
+        if finding.score >= config.injection_threshold:
+            return Action.BLOCK
+
+        return Action.ALLOW
+
+    if finding.category == Category.PII_DISCLOSURE:
+        return Action.SANITIZE
+
     return Action.BLOCK
+
+
+def decide_action(findings: list[Finding], config: GuardConfig) -> Action:
+    if not findings:
+        return Action.ALLOW
+
+    return max(
+        (action_for_finding(finding, config) for finding in findings),
+        key=ACTION_PRIORITY.__getitem__,
+    )
 
 _REGISTRY: dict[str, type[Detector]] = {
     "null": NullDetector,
@@ -65,15 +77,23 @@ class Engine:
 
         masked_text: str | None = None
         placeholders: dict[str, str] = {}
-
+        
         if action == Action.SANITIZE:
-            masked_text, placeholders = mask(text, tuple(all_findings), self._config)
+            maskable_findings = sorted(
+                (
+                    finding for finding in all_findings 
+                    if finding.category == Category.PII_DISCLOSURE
+                ),
+                key=lambda finding: finding.start
+            )
+            
+            masked_text, placeholders = mask(text, tuple(maskable_findings), self._config)
 
         end = time.perf_counter_ns()
         elapsed_ns = end - start
 
         return Decision(action = action,
-                         findings = tuple(all_findings), 
-                         elapsed_ns = elapsed_ns, 
-                         sanitized_text = masked_text, 
-                         placeholders = placeholders)
+                        findings = tuple(all_findings), 
+                        elapsed_ns = elapsed_ns, 
+                        sanitized_text = masked_text, 
+                        placeholders = placeholders)
