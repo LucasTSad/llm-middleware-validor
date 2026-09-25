@@ -1,7 +1,7 @@
 # ADR 0001 — Pipeline de detectores com núcleo isolado
 
-**Status:** Aceito  
-**Data:** 03/09/2026  
+* **Status:** Aceito
+* **Data:** 03/09/2026
 
 ## Contexto
 O middleware precisa inspecionar cada *prompt* em três dimensões distintas (PII, *injection* e orçamento) sob um limite rigoroso de 15 ms de latência adicionada. A validação experimental exige executar essa lógica milhares de vezes para mensurar percentis de desempenho, o que se torna inviável se a execução depender diretamente do ambiente em nuvem ou de *frameworks* de infraestrutura.

@@ -1,7 +1,7 @@
 # ADR 0005 — Mascaramento reversível de PII
 
 * **Status:** Aceito
-* **Data:** 2026-09-23
+* **Data:** 23/09/2026
 
 ## Contexto
 

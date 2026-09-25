@@ -1,8 +1,7 @@
 # ADR 0004 — Detecção de PII em dois estágios
 
-**Status:** Aceito
-
-**Data:** 17/09/2026
+* **Status:** Aceito
+* **Data:** 17/09/2026
 
 ## Contexto
 

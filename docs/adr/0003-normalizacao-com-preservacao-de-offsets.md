@@ -1,7 +1,7 @@
 # ADR 0003 — Normalizacao com preservacao de offsets
 
-**Status:** Aceito  
-**Data:** 11/09/2026
+* **Status:** Aceito
+* **Data:** 11/09/2026
 
 ## Contexto
 A normalização é necessária para reduzir vetores de obfuscação Unicode que podem escapar
