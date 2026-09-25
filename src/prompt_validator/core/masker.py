@@ -1,9 +1,12 @@
 from prompt_validator.core.contracts import Finding, GuardConfig, MaskMode
 
-def mask(original_text: str, findings: tuple[Finding, ...], config: GuardConfig) -> tuple[str, dict[str, str]]:
+
+def mask(
+    original_text: str, findings: tuple[Finding, ...], config: GuardConfig
+) -> tuple[str, dict[str, str]]:
     masked_parts: list[str] = []
     replacements: dict[str, str] = {}
-    
+
     placeholder_by_value: dict[tuple[str, str], str] = {}
     placeholder_counter: dict[str, int] = {}
 
@@ -24,7 +27,9 @@ def mask(original_text: str, findings: tuple[Finding, ...], config: GuardConfig)
         if key in placeholder_by_value:
             placeholder = placeholder_by_value[key]
         else:
-            placeholder_counter[finding_type] = placeholder_counter.get(finding_type, 0) + 1
+            placeholder_counter[finding_type] = (
+                placeholder_counter.get(finding_type, 0) + 1
+            )
             placeholder = f"[{finding_type}_{placeholder_counter[finding_type]}]"
             placeholder_by_value[key] = placeholder
 
@@ -35,10 +40,11 @@ def mask(original_text: str, findings: tuple[Finding, ...], config: GuardConfig)
 
         last_end = end
 
-    masked_parts.append(original_text[last_end:]) 
+    masked_parts.append(original_text[last_end:])
     masked_text = "".join(masked_parts)
 
     return masked_text, replacements
+
 
 def rehydrate(masked_text: str, replacements: dict[str, str]) -> str:
     rehydrated_text = masked_text

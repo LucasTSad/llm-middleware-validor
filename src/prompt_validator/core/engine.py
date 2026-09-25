@@ -1,14 +1,20 @@
 from __future__ import annotations
 
-from prompt_validator.core.contracts import (Decision, Finding, GuardConfig, Action)
-from prompt_validator.core.contracts import Category
-from prompt_validator.core.detectors.null import NullDetector
-from prompt_validator.core.detectors.base import Detector
-from prompt_validator.core.detectors.pii import PiiDetector
-from prompt_validator.core.normalizer import normalize
-from prompt_validator.core.masker import mask
-
 import time
+
+from prompt_validator.core.contracts import (
+    Action,
+    Category,
+    Decision,
+    Finding,
+    GuardConfig,
+)
+from prompt_validator.core.detectors.base import Detector
+from prompt_validator.core.detectors.injection import InjectionDetector
+from prompt_validator.core.detectors.null import NullDetector
+from prompt_validator.core.detectors.pii import PiiDetector
+from prompt_validator.core.masker import mask
+from prompt_validator.core.normalizer import normalize
 
 ACTION_PRIORITY = {
     Action.ALLOW: 0,
@@ -42,24 +48,32 @@ def decide_action(findings: list[Finding], config: GuardConfig) -> Action:
         key=ACTION_PRIORITY.__getitem__,
     )
 
+
 _REGISTRY: dict[str, type[Detector]] = {
     "null": NullDetector,
     "pii": PiiDetector,
+    "injection": InjectionDetector,
 }
+
+
 def build_detectors(config: GuardConfig) -> list[Detector]:
     detectors: list[Detector] = []
 
     for name in config.enabled_detectors:
         if name not in _REGISTRY:
-            raise ValueError(f"Detector {name} nao encontrado \n Detectors disponiveis: {list(_REGISTRY)}")
-        
+            raise ValueError(
+                f"Detector {name} nao encontrado \n",
+                f"Detectors disponiveis: {list(_REGISTRY)}"
+            )
+
         classe = _REGISTRY[name]
         detectors.append(classe())
 
     return detectors
 
+
 class Engine:
-    def __init__(self, detectors: list[Detector], config: GuardConfig) -> None:  
+    def __init__(self, detectors: list[Detector], config: GuardConfig) -> None:
         self._config = config
         self._detectors = detectors
 
@@ -77,23 +91,28 @@ class Engine:
 
         masked_text: str | None = None
         placeholders: dict[str, str] = {}
-        
+
         if action == Action.SANITIZE:
             maskable_findings = sorted(
                 (
-                    finding for finding in all_findings 
+                    finding
+                    for finding in all_findings
                     if finding.category == Category.PII_DISCLOSURE
                 ),
-                key=lambda finding: finding.start
+                key=lambda finding: finding.start,
             )
-            
-            masked_text, placeholders = mask(text, tuple(maskable_findings), self._config)
+
+            masked_text, placeholders = mask(
+                text, tuple(maskable_findings), self._config
+            )
 
         end = time.perf_counter_ns()
         elapsed_ns = end - start
 
-        return Decision(action = action,
-                        findings = tuple(all_findings), 
-                        elapsed_ns = elapsed_ns, 
-                        sanitized_text = masked_text, 
-                        placeholders = placeholders)
+        return Decision(
+            action=action,
+            findings=tuple(all_findings),
+            elapsed_ns=elapsed_ns,
+            sanitized_text=masked_text,
+            placeholders=placeholders,
+        )

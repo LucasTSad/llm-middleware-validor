@@ -29,23 +29,28 @@ Execução:
    possuem custos diferentes, por isso são medidos separadamente.
 """
 
-from datetime import datetime
-from pathlib import Path
 import platform
 import random
 import time
+from datetime import UTC, datetime
+from pathlib import Path
 
 from calcular_percentis import calcular_percentis
 
-from prompt_validator.core.normalizer import normalize
 from prompt_validator.core.contracts import GuardConfig
+from prompt_validator.core.normalizer import normalize
 
 AQUECIMENTO = 500
 N = 10_000
 
-TEXTO =  ("Preciso que voce reorganize essa tabela de excel com os cpf: 123.456.789-00, 321.654.987-00 e 987.654.321-00" 
-" e e-mails: sad@gmail.com , bem@gmail.com e joo@gmail.com e telefones: 11 1234-5678 , 22 9876-5432 e 33 5555-6666 de" 
-" forma que os cpf e e-mails sejam mostrados na primeira coluna e os telefones na segunda.")
+TEXTO = (
+    "Preciso que voce reorganize essa tabela de excel com os cpf:"
+    " 123.456.789-00, 321.654.987-00 e 987.654.321-00 e e-mails:"
+    " sad@gmail.com , bem@gmail.com e joo@gmail.com e telefones:"
+    " 11 1234-5678 , 22 9876-5432 e 33 5555-6666 de forma que os"
+    " cpf e e-mails sejam mostrados na primeira coluna e os telefones"
+    " na segunda."
+)
 
 TAMANHOS = (100, 1_000, 10_000)
 
@@ -54,16 +59,18 @@ CAMINHO = Path("benchmarks/resultados/dia_03_normalizer.txt")
 config = GuardConfig()
 
 INVISIVEIS = ("\u200b", "\ufeff", "\u00ad", "\u202e", "\u2060")
-NFKC_CARACTERES = ("Ａ","Ｂ","Ｃ","½","ﬁ")
+NFKC_CARACTERES = ("Ａ", "Ｂ", "Ｃ", "½", "ﬁ")
 TAXA_SUBSTITUICAO = 20
 
 semente = 42
 random.seed(semente)
 
+
 def criar_texto(base: str, tamanho: int) -> str:
     return (base * ((tamanho // len(base)) + 1))[:tamanho]
 
-def criar_adversarial(codigo : tuple[str, ...], taxa: int, texto: str) -> str:
+
+def criar_adversarial(codigo: tuple[str, ...], taxa: int, texto: str) -> str:
     caracteres = []
 
     for caractere in texto:
@@ -73,6 +80,7 @@ def criar_adversarial(codigo : tuple[str, ...], taxa: int, texto: str) -> str:
             caracteres.append(caractere)
 
     return "".join(caracteres)
+
 
 def medir_normalizacao(texto: str, config: GuardConfig) -> tuple[int, int, int]:
 
@@ -90,6 +98,7 @@ def medir_normalizacao(texto: str, config: GuardConfig) -> tuple[int, int, int]:
 
     return calcular_percentis(tempos)
 
+
 textos = {}
 for tamanho in TAMANHOS:
     textos_ascii = criar_texto(TEXTO, tamanho)
@@ -99,7 +108,7 @@ for tamanho in TAMANHOS:
     textos[tamanho] = {
         "ascii": textos_ascii,
         "invisiveis": texto_invisiveis,
-        "nfkc": texto_nfkc
+        "nfkc": texto_nfkc,
     }
 
 resultados = {}
@@ -113,7 +122,7 @@ for tamanho, variantes in textos.items():
             "p50": p50,
             "p95": p95,
             "p99": p99,
-            "custo_por_caractere_por_entrada": p95 / len(texto)
+            "custo_por_caractere_por_entrada": p95 / len(texto),
         }
 
 for tamanho in TAMANHOS:
@@ -125,7 +134,7 @@ for tamanho in TAMANHOS:
     resultados[tamanho]["razao_nfkc"] = p95_nfkc / p95_ascii
 
 linhas_relatorio = [
-    f"Data e Hora: {datetime.now()}",
+    f"Data e Hora: {datetime.now(UTC).isoformat()}",
     f"Python: {platform.python_version()}",
     f"Plataforma: {platform.platform()}",
     f"Execuções (N): {N}",
@@ -150,36 +159,36 @@ for tamanho in TAMANHOS:
         )
 
     linhas_relatorio.append(
-        f"Razão invisiveis/ASCII: "
-        f"{resultados[tamanho]['razao_invisiveis']:.2f}x"
+        f"Razão invisiveis/ASCII: {resultados[tamanho]['razao_invisiveis']:.2f}x"
     )
 
     linhas_relatorio.append(
-        f"Razão NFKC/ASCII: "
-        f"{resultados[tamanho]['razao_nfkc']:.2f}x"
+        f"Razão NFKC/ASCII: {resultados[tamanho]['razao_nfkc']:.2f}x"
     )
 
 p50_comparacao, p95_comparacao, p99_comparacao = medir_normalizacao(TEXTO, config)
 
-linhas_relatorio.extend([
-    "",
-    "Comparação com o dia 2:",
-    f"Tamanho do TEXTO: {len(TEXTO)} caracteres",
-    "Dia 2 - P95 pipeline sem normalização: 4,1 µs",
-    "(fonte: benchmarks/resultados/dia_02_null.txt, commit bca6ff8)",
-    (
-        f"Dia 3 - P95 normalização isolada: "
-        f"{p95_comparacao} ns ({p95_comparacao / 1e3:.2f} µs)"
-    ),
-    (
-        f"Estimativa P95 pipeline com normalização: "
-        f"{4.1 + p95_comparacao / 1e3:.2f} µs"
-    ),
-])
+linhas_relatorio.extend(
+    [
+        "",
+        "Comparação com o dia 2:",
+        f"Tamanho do TEXTO: {len(TEXTO)} caracteres",
+        "Dia 2 - P95 pipeline sem normalização: 4,1 µs",
+        "(fonte: benchmarks/resultados/dia_02_null.txt, commit bca6ff8)",
+        (
+            f"Dia 3 - P95 normalização isolada: "
+            f"{p95_comparacao} ns ({p95_comparacao / 1e3:.2f} µs)"
+        ),
+        (
+            f"Estimativa P95 pipeline com normalização: "
+            f"{4.1 + p95_comparacao / 1e3:.2f} µs"
+        ),
+    ]
+)
 
 relatorio = "\n".join(linhas_relatorio)
 
 print(relatorio)
 
-CAMINHO.parent.mkdir(parents = True, exist_ok = True)
-CAMINHO.write_text(relatorio, encoding = "utf-8")
+CAMINHO.parent.mkdir(parents=True, exist_ok=True)
+CAMINHO.write_text(relatorio, encoding="utf-8")

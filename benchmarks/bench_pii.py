@@ -43,8 +43,9 @@ Execução:
 
 6. Quais cenários e parâmetros são utilizados?
    São avaliados textos de 100, 1.000 e 10.000 caracteres. Nos cenários
-   adversariais, um CPF é inserido a cada 5 palavras. São utilizados três CPFs 
-   válidos e três inválidos, alternados ciclicamente dentro de seus respectivos cenários.
+   adversariais, um CPF é inserido a cada 5 palavras. São utilizados três CPFs
+   válidos e três inválidos, alternados ciclicamente dentro de seus respectivos
+   cenários.
 
 7. Quais limitações existem?
    Os cenários são artificiais e não representam a distribuição de CPFs
@@ -61,16 +62,16 @@ Execução:
    ajudam a observar a influência do ambiente.
 """
 
-from datetime import datetime
-from pathlib import Path
 import platform
 import time
+from datetime import UTC, datetime
+from pathlib import Path
 
 from calcular_percentis import calcular_percentis
 
-from prompt_validator.core.normalizer import normalize
 from prompt_validator.core.contracts import GuardConfig, NormalizedText
-from prompt_validator.core.detectors.pii import PiiDetector, _CPF_PATTERN
+from prompt_validator.core.detectors.pii import _CPF_PATTERN, PiiDetector
+from prompt_validator.core.normalizer import normalize
 
 AQUECIMENTO = 500
 N = 10_000
@@ -106,14 +107,16 @@ CAMINHO = Path("benchmarks/resultados/dia_04_pii_N_10_000.txt")
 config = GuardConfig()
 detector = PiiDetector()
 
+
 def criar_texto(base: str, tamanho: int) -> str:
     return (base * ((tamanho // len(base)) + 1))[:tamanho]
+
 
 def criar_adversarial(texto: str, itens: tuple[str, ...], a_cada_n_palavra: int) -> str:
     palavras = texto.split()
     resultado = []
 
-    for i,palavra in enumerate(palavras, start = 1):
+    for i, palavra in enumerate(palavras, start=1):
         resultado.append(palavra)
 
         if i % a_cada_n_palavra == 0:
@@ -122,8 +125,12 @@ def criar_adversarial(texto: str, itens: tuple[str, ...], a_cada_n_palavra: int)
 
     return " ".join(resultado)
 
-def calcular_custo_marginal(p50_base: int, p50_cenario: int, quantidade_candidatos: int) -> float:
+
+def calcular_custo_marginal(
+    p50_base: int, p50_cenario: int, quantidade_candidatos: int
+) -> float:
     return (p50_cenario - p50_base) / quantidade_candidatos
+
 
 texto_invalido = criar_adversarial(
     TEXTO,
@@ -136,6 +143,7 @@ texto_valido = criar_adversarial(
     CPFS_VALIDOS,
     A_CADA_N_PALAVRA,
 )
+
 
 def medir_inspect(normalized: NormalizedText) -> tuple[int, int, int]:
 
@@ -155,6 +163,7 @@ def medir_inspect(normalized: NormalizedText) -> tuple[int, int, int]:
 
     return calcular_percentis(tempos)
 
+
 resultados = {}
 for tamanho in TAMANHOS:
     textos = {
@@ -163,10 +172,10 @@ for tamanho in TAMANHOS:
         "cpf_valido": criar_texto(texto_valido, tamanho),
     }
 
-    for nome,texto in textos.items():
+    for nome, texto in textos.items():
         candidatos = _CPF_PATTERN.findall(texto)
 
-        normalized = normalize(texto,config)
+        normalized = normalize(texto, config)
 
         findings = detector.inspect(normalized, config)
 
@@ -179,7 +188,7 @@ for tamanho in TAMANHOS:
             "p50": p50,
             "p95": p95,
             "p99": p99,
-            "p50_custo_por_caractere": p50 / len(texto)
+            "p50_custo_por_caractere": p50 / len(texto),
         }
 
     p50_sem_candidato = resultados[tamanho, "sem_candidato"]["p50"]
@@ -190,13 +199,19 @@ for tamanho in TAMANHOS:
     candidatos_invalidos = resultados[tamanho, "candidato_invalido"]["candidatos"]
 
     resultados[tamanho, "marginais"] = {
-        "custo_marginal_invalido": calcular_custo_marginal(p50_sem_candidato, p50_invalido, candidatos_invalidos),
-        "custo_marginal_valido": calcular_custo_marginal(p50_sem_candidato, p50_valido, candidatos_validos),
-        "custo_marginal_valido_invalido":  calcular_custo_marginal(p50_invalido, p50_valido, candidatos_validos)
+        "custo_marginal_invalido": calcular_custo_marginal(
+            p50_sem_candidato, p50_invalido, candidatos_invalidos
+        ),
+        "custo_marginal_valido": calcular_custo_marginal(
+            p50_sem_candidato, p50_valido, candidatos_validos
+        ),
+        "custo_marginal_valido_invalido": calcular_custo_marginal(
+            p50_invalido, p50_valido, candidatos_validos
+        ),
     }
 
 linhas_relatorio = [
-    f"Data e Hora: {datetime.now()}",
+    f"Data e Hora: {datetime.now(UTC).isoformat()}",
     f"Python: {platform.python_version()}",
     f"Plataforma: {platform.platform()}",
     f"Execuções (N): {N}",
@@ -223,20 +238,22 @@ for tamanho in TAMANHOS:
             f"P99: {resultado['p99']} ns | "
             f"Candidatos: {resultado['candidatos']} | "
             f"Findings: {resultado['findings']} | "
-            f"P50/caractere: {resultado['p50_custo_por_caractere']:.2f} ns")
+            f"P50/caractere: {resultado['p50_custo_por_caractere']:.2f} ns"
+        )
 
-        if nome == "sem_candidato":    
+        if nome == "sem_candidato":
             razao_gatilho = (
-                  resultado["p50_custo_por_caractere"] / GATILHO_NS_POR_CHAR
-              ) * 100
+                resultado["p50_custo_por_caractere"] / GATILHO_NS_POR_CHAR
+            ) * 100
             razao_normalizer = (
-                  resultado["p50_custo_por_caractere"] / NORMALIZER_NS_POR_CHAR
-              ) * 100
+                resultado["p50_custo_por_caractere"] / NORMALIZER_NS_POR_CHAR
+            ) * 100
 
             linhas_relatorio.append(
                 f"Razão detector/gatilho atual: {razao_gatilho:.2f}% | "
-                f"Razão detector/normalizador: {razao_normalizer:.2f}%")
-    
+                f"Razão detector/normalizador: {razao_normalizer:.2f}%"
+            )
+
     marginais = resultados[tamanho, "marginais"]
 
     linhas_relatorio.append(
@@ -253,5 +270,5 @@ relatorio = "\n".join(linhas_relatorio)
 
 print(relatorio)
 
-CAMINHO.parent.mkdir(parents = True, exist_ok = True)
-CAMINHO.write_text(relatorio, encoding = "utf-8")
+CAMINHO.parent.mkdir(parents=True, exist_ok=True)
+CAMINHO.write_text(relatorio, encoding="utf-8")
