@@ -83,6 +83,7 @@ def test_delimitador_com_invisivel_antes_preserva_span_original():
     finding = findings[0]
     assert texto[finding.start : finding.end] == "<|system|>"
 
+
 def test_delimitador_com_invisivel_dentro_preserva_span_original():
     texto = "antes <|sys\u200btem|> depois"
 
@@ -92,7 +93,8 @@ def test_delimitador_com_invisivel_dentro_preserva_span_original():
     assert len(findings) == 1
 
     finding = findings[0]
-    assert texto[finding.start:finding.end] == "<|sys\u200btem|>"
+    assert texto[finding.start : finding.end] == "<|sys\u200btem|>"
+
 
 def test_dois_delimitadores_geram_dois_findings():
     texto = "<|system|> texto <|end|>"
@@ -105,3 +107,17 @@ def test_dois_delimitadores_geram_dois_findings():
         "<|system|>",
         "<|end|>",
     ]
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="A regra de delimitadores ainda exige uma letra maiúscula no " \
+    "primeiro caractere do marcador entre colchetes.",
+)
+def test_delimitador_bracket_com_primeiro_digito():
+    texto = "[5Y5T3M]"
+
+    normalized = normalize(texto, GuardConfig())
+    findings = InjectionDetector().inspect(normalized, GuardConfig())
+
+    assert findings
