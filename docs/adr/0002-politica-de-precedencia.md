@@ -1,7 +1,8 @@
 # ADR 0002 — A política de precedência de ações
 
-**Status:** Aceito  
-**Data:** 08/09/2026  
+* **Status:** Substituído por ADR 0006 — Precedência por máximo de ações
+* **Data da substituição:** 25/09/2026
+* **Data:** 08/09/2026
 
 ## Contexto
 Detectores reportam achados de forma independente. O sistema precisa traduzir uma lista heterogênea de objetos `Finding` em uma única decisão final (`Action`). Como múltiplas regras podem disparar sobre o mesmo texto, é necessário estabelecer uma política clara de precedência para evitar ambiguidades no resultado.
