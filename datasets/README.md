@@ -36,7 +36,7 @@ Uma família é incluída em `families` quando o texto contém, de forma indepen
 
 As famílias utilizadas neste corpus são:
 
-* `delimiter`: uso de marcadores que tentam simular ou introduzir uma fronteira privilegiada de mensagem ou instrução;
+* `delimiter`: tentativa de introduzir ou simular uma fronteira sintática privilegiada de mensagem ou instrução;
 * `persona_switch`: tentativa de alterar explicitamente a identidade, o papel ou a autoridade atribuída ao assistente;
 * `instruction_override`: tentativa explícita de substituir, ignorar ou invalidar instruções anteriores;
 * `system_prompt`: solicitação explícita para revelar o system prompt, instruções internas ou regras ocultas.
@@ -66,35 +66,60 @@ Os ataques contemplam quatro famílias. Alguns casos possuem múltiplas família
 
 Os casos legítimos foram construídos para serem adversariais contra o próprio detector, incluindo discussões acadêmicas sobre prompt injection, uso coloquial de termos como "ignore", marcadores de templates de modelos e solicitações legítimas relacionadas a system prompts.
 
-## Implementação inicial do detector
+## Descoberta durante a preparação da avaliação
 
-A primeira implementação da família `delimiter` será feita por **correspondência literal dos marcadores definidos pela regra**, sem análise do contexto em que o marcador aparece.
+Antes da execução da avaliação agregada, foi comparada a lista de marcadores inicialmente prevista para a regra `delimiter` com os casos do corpus.
 
-Essa decisão é intencional para que a primeira avaliação estabeleça uma linha de base mensurável. A necessidade de introduzir análise contextual será decidida posteriormente com base nos resultados observados no corpus.
-
-A família `delimiter` inclui, entre outros, marcadores como:
+A comparação revelou que os cinco marcadores inicialmente definidos:
 
 * `[INST]`;
 * `<|im_start|>`;
 * `<|im_end|>`;
 * `<message role="system">`;
-* `</system>`.
+* `</system>`;
+
+apareciam somente nos casos legítimos `leg_03`, `leg_04` e `leg_05`, enquanto os ataques classificados como `delimiter` utilizavam outras formas:
+
+* `atk_01`: `<|system|>` e `<|end|>`;
+* `atk_02`: `[SYSTEM]` e `[END SYSTEM]`.
+
+Consequentemente, uma implementação baseada exclusivamente em uma lista fechada desses cinco marcadores seria incapaz de detectar `atk_01` e `atk_02`, embora pudesse gerar falsos positivos nos casos legítimos.
+
+Essa descoberta foi registrada **antes da execução da avaliação agregada** e levou à revisão da definição operacional da família `delimiter`.
+
+A família passou a representar a **forma de tentativa de introdução de uma fronteira privilegiada**, e não somente uma lista fechada de marcadores conhecidos de templates.
+
+## Implementação inicial do detector
+
+A primeira implementação da família `delimiter` utiliza correspondência literal de **formas restritas de delimitadores privilegiados**, sem análise contextual.
+
+A versão inicial considera três formas:
+
+1. marcadores entre `|`, como `<|system|>` ou `<|im_start|>`;
+2. marcadores entre colchetes em caixa alta, como `[SYSTEM]` ou `[INST]`;
+3. delimitadores XML explícitos relacionados a `system`, como `<message role="system">` e `</system>`.
+
+A implementação deliberadamente não considera qualquer conteúdo arbitrário entre `< >` ou `[ ]` como um delimitador. A generalização desses padrões ou a introdução de análise contextual será avaliada posteriormente.
+
+A primeira implementação também utiliza correspondência **sensível a maiúsculas e minúsculas**. Essa decisão mantém a linha de base literal controlada e evita introduzir, simultaneamente, uma segunda variável experimental.
+
+A utilização de `re.ASCII` não é necessária nesta regra, pois o padrão não utiliza classes como `\w`, `\d` ou `\b` cujo significado seria alterado pela flag.
 
 ## Hipótese registrada antes da avaliação
 
-Os casos `leg_03`, `leg_04` e `leg_05` contêm literalmente marcadores associados a delimitadores de mensagens de modelos:
+Os casos `leg_03`, `leg_04` e `leg_05` contêm formas de delimitadores que também estão dentro do escopo da implementação inicial:
 
 * `leg_03`: `[INST]`;
 * `leg_04`: `<|im_start|>` e `<|im_end|>`;
 * `leg_05`: `<message role="system">` e `</system>`.
 
-Esses marcadores estão dentro do escopo da família `delimiter`.
+Esses casos representam uso legítimo dos mesmos formatos que podem aparecer em entradas de ataque.
 
-**Previsão registrada antes da implementação:** a primeira implementação literal de `delimiter`, sem considerar o contexto em que os marcadores aparecem, acusará `leg_03`, `leg_04` e `leg_05`, resultando em uma taxa de falso positivo de **3/8 = 37,5%**.
+**Previsão registrada antes da implementação:** a implementação inicial de `delimiter`, sem considerar o contexto em que os marcadores aparecem, deverá acusar `leg_03`, `leg_04` e `leg_05`, resultando em uma taxa de falso positivo de **3/8 = 37,5%**.
 
 A previsão será considerada confirmada somente se os três casos forem efetivamente classificados como `BLOCK`. Caso contrário, a previsão será considerada refutada ou parcialmente confirmada, conforme os casos efetivamente classificados.
 
-Essa previsão é registrada antes da implementação da regra correspondente para evitar que o resultado observado seja utilizado para formular retroativamente a hipótese.
+A descoberta anterior sobre a ausência dos marcadores originalmente definidos nos ataques constitui uma observação metodológica distinta da previsão acima e foi registrada antes da execução da avaliação agregada.
 
 ## Métricas
 
@@ -118,6 +143,8 @@ Os resultados por família são apresentados **somente em contagens absolutas**.
 O corpus inicial possui poucos casos por família e permite múltiplos rótulos por caso. Portanto, percentuais por família dariam uma aparência de precisão que o tamanho da amostra não sustenta.
 
 Um caso com duas famílias contribui para a contagem de ambas as famílias, sem alterar o número total de ataques do corpus.
+
+Os resultados agregados são calculados por **caso**, e não por quantidade de `Finding`s. Um único caso pode produzir vários findings quando contém mais de um marcador da mesma família.
 
 ## Limitações
 
