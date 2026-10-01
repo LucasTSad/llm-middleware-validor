@@ -66,6 +66,7 @@ import platform
 import time
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import TypedDict
 
 from calcular_percentis import calcular_percentis
 
@@ -103,6 +104,23 @@ GATILHO_ORIGINAL_NS_POR_CHAR = 155
 NORMALIZER_NS_POR_CHAR = 310
 
 CAMINHO = Path("benchmarks/resultados/dia_04_pii_N_10_000.txt")
+
+
+class Resultado(TypedDict):
+    chars: int
+    candidatos: int
+    findings: int
+    p50: int
+    p95: int
+    p99: int
+    p50_custo_por_caractere: float
+
+
+class Marginais(TypedDict):
+    custo_marginal_invalido: float
+    custo_marginal_valido: float
+    custo_marginal_valido_invalido: float
+
 
 config = GuardConfig()
 detector = PiiDetector()
@@ -164,7 +182,8 @@ def medir_inspect(normalized: NormalizedText) -> tuple[int, int, int]:
     return calcular_percentis(tempos)
 
 
-resultados = {}
+resultados: dict[tuple[int, str], Resultado] = {}
+marginais: dict[int, Marginais] = {}
 for tamanho in TAMANHOS:
     textos = {
         "sem_candidato": criar_texto(TEXTO, tamanho),
@@ -198,15 +217,21 @@ for tamanho in TAMANHOS:
     candidatos_validos = resultados[tamanho, "cpf_valido"]["candidatos"]
     candidatos_invalidos = resultados[tamanho, "candidato_invalido"]["candidatos"]
 
-    resultados[tamanho, "marginais"] = {
+    marginais[tamanho] = {
         "custo_marginal_invalido": calcular_custo_marginal(
-            p50_sem_candidato, p50_invalido, candidatos_invalidos
+            p50_sem_candidato,
+            p50_invalido,
+            candidatos_invalidos,
         ),
         "custo_marginal_valido": calcular_custo_marginal(
-            p50_sem_candidato, p50_valido, candidatos_validos
+            p50_sem_candidato,
+            p50_valido,
+            candidatos_validos,
         ),
         "custo_marginal_valido_invalido": calcular_custo_marginal(
-            p50_invalido, p50_valido, candidatos_validos
+            p50_invalido,
+            p50_valido,
+            candidatos_validos,
         ),
     }
 
@@ -254,16 +279,16 @@ for tamanho in TAMANHOS:
                 f"Razão detector/normalizador: {razao_normalizer:.2f}%"
             )
 
-    marginais = resultados[tamanho, "marginais"]
+    marginal = marginais[tamanho]
 
     linhas_relatorio.append(
         f"Marginais: "
         f"custo por candidato rejeitado: "
-        f"{marginais['custo_marginal_invalido'] / 1000:.2f} µs | "
+        f"{marginal['custo_marginal_invalido'] / 1000:.2f} µs | "
         f"custo por candidato aceito (Finding): "
-        f"{marginais['custo_marginal_valido'] / 1000:.2f} µs | "
+        f"{marginal['custo_marginal_valido'] / 1000:.2f} µs | "
         f"custo de aceitar vs rejeitar: "
-        f"{marginais['custo_marginal_valido_invalido'] / 1000:.2f} µs"
+        f"{marginal['custo_marginal_valido_invalido'] / 1000:.2f} µs"
     )
 
 relatorio = "\n".join(linhas_relatorio)

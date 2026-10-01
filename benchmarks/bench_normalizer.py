@@ -34,6 +34,7 @@ import random
 import time
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import TypedDict
 
 from calcular_percentis import calcular_percentis
 
@@ -61,6 +62,19 @@ config = GuardConfig()
 INVISIVEIS = ("\u200b", "\ufeff", "\u00ad", "\u202e", "\u2060")
 NFKC_CARACTERES = ("Ａ", "Ｂ", "Ｃ", "½", "ﬁ")
 TAXA_SUBSTITUICAO = 20
+
+
+class Resultado(TypedDict):
+    p50: int
+    p95: int
+    p99: int
+    custo_por_caractere_por_entrada: float
+
+
+class Razoes(TypedDict):
+    invisiveis: float
+    nfkc: float
+
 
 semente = 42
 random.seed(semente)
@@ -111,7 +125,9 @@ for tamanho in TAMANHOS:
         "nfkc": texto_nfkc,
     }
 
-resultados = {}
+resultados: dict[int, dict[str, Resultado]] = {}
+razoes: dict[int, Razoes] = {}
+
 for tamanho, variantes in textos.items():
     resultados[tamanho] = {}
 
@@ -130,8 +146,10 @@ for tamanho in TAMANHOS:
     p95_invisiveis = resultados[tamanho]["invisiveis"]["p95"]
     p95_nfkc = resultados[tamanho]["nfkc"]["p95"]
 
-    resultados[tamanho]["razao_invisiveis"] = p95_invisiveis / p95_ascii
-    resultados[tamanho]["razao_nfkc"] = p95_nfkc / p95_ascii
+    razoes[tamanho] = {
+        "invisiveis": p95_invisiveis / p95_ascii,
+        "nfkc": p95_nfkc / p95_ascii,
+    }
 
 linhas_relatorio = [
     f"Data e Hora: {datetime.now(UTC).isoformat()}",
@@ -159,12 +177,10 @@ for tamanho in TAMANHOS:
         )
 
     linhas_relatorio.append(
-        f"Razão invisiveis/ASCII: {resultados[tamanho]['razao_invisiveis']:.2f}x"
+        f"Razão invisiveis/ASCII: {razoes[tamanho]['invisiveis']:.2f}x"
     )
 
-    linhas_relatorio.append(
-        f"Razão NFKC/ASCII: {resultados[tamanho]['razao_nfkc']:.2f}x"
-    )
+    linhas_relatorio.append(f"Razão NFKC/ASCII: {razoes[tamanho]['nfkc']:.2f}x")
 
 p50_comparacao, p95_comparacao, p99_comparacao = medir_normalizacao(TEXTO, config)
 
