@@ -4,6 +4,7 @@ AVALIAÇÃO DE PROMPT INJECTION
 Corpus: datasets/prompt_injection_corpus.jsonl
 Corpus SHA-256: 80c9888b3a6ac36457bc6c53d4f0d3fc3672d3529ca9f451aa3a7b2b0aade354
 Casos: 16
+Commit: 90aa208
 Detector habilitado: injection
 
 COMPOSIÇÃO DO CORPUS
