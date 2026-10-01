@@ -40,6 +40,7 @@ from calcular_percentis import calcular_percentis
 
 from prompt_validator.core.contracts import GuardConfig
 from prompt_validator.core.normalizer import normalize
+from prompt_validator.provenance import obter_commit
 
 AQUECIMENTO = 500
 N = 10_000
@@ -55,7 +56,9 @@ TEXTO = (
 
 TAMANHOS = (100, 1_000, 10_000)
 
-CAMINHO = Path("benchmarks/resultados/dia_03_normalizer.txt")
+CAMINHO = (
+    Path(__file__).resolve().parent / "resultados" / "dia_03_normalizer_N_10_000.txt"
+)
 
 config = GuardConfig()
 
@@ -151,8 +154,11 @@ for tamanho in TAMANHOS:
         "nfkc": p95_nfkc / p95_ascii,
     }
 
+commit = obter_commit(Path(__file__).resolve().parent)
+
 linhas_relatorio = [
     f"Data e Hora: {datetime.now(UTC).isoformat()}",
+    f"Commit: {commit}",
     f"Python: {platform.python_version()}",
     f"Plataforma: {platform.platform()}",
     f"Execuções (N): {N}",

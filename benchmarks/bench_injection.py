@@ -78,6 +78,7 @@ from calcular_percentis import calcular_percentis
 from prompt_validator.core.contracts import GuardConfig, NormalizedText
 from prompt_validator.core.detectors.injection import InjectionDetector
 from prompt_validator.core.normalizer import normalize
+from prompt_validator.provenance import obter_commit
 
 AQUECIMENTO = 500
 N = 10_000
@@ -295,11 +296,14 @@ for tamanho in TAMANHOS:
         "custo_marginal_colchete": custo_marginal_colchete,
     }
 
+commit = obter_commit(Path(__file__).resolve().parent)
+
 linhas_relatorio = [
     "BENCHMARK — DETECTOR DE PROMPT INJECTION",
     "=" * 72,
     "",
     f"Data e Hora: {datetime.now(UTC).isoformat()}",
+    f"Commit: {commit}",
     f"Python: {platform.python_version()}",
     f"Plataforma: {platform.platform()}",
     f"Execuções (N): {N}",

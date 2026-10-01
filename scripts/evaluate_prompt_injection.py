@@ -7,6 +7,7 @@ from typing import TypedDict
 
 from prompt_validator.core.contracts import Action, Decision, GuardConfig
 from prompt_validator.core.engine import Engine, build_detectors
+from prompt_validator.provenance import obter_commit
 
 
 class CorpusCase(TypedDict):
@@ -44,6 +45,9 @@ def rule_family(rule_id: str) -> str:
         return rule_id
 
     return parts[1]
+
+
+commit = obter_commit(Path(__file__).resolve().parent)
 
 
 def evaluate(cases: list[CorpusCase]) -> str:
@@ -116,6 +120,7 @@ def evaluate(cases: list[CorpusCase]) -> str:
     lines.append(f"Corpus: {CORPUS_PATH.relative_to(ROOT_DIR).as_posix()}")
     lines.append(f"Corpus SHA-256: {file_sha256(CORPUS_PATH)}")
     lines.append(f"Casos: {len(cases)}")
+    lines.append(f"Commit: {commit}")
     lines.append("Detector habilitado: injection")
     lines.append("")
     lines.append("COMPOSIÇÃO DO CORPUS")

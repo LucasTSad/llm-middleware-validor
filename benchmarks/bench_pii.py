@@ -73,6 +73,7 @@ from calcular_percentis import calcular_percentis
 from prompt_validator.core.contracts import GuardConfig, NormalizedText
 from prompt_validator.core.detectors.pii import _CPF_PATTERN, PiiDetector
 from prompt_validator.core.normalizer import normalize
+from prompt_validator.provenance import obter_commit
 
 AQUECIMENTO = 500
 N = 10_000
@@ -103,7 +104,7 @@ GATILHO_NS_POR_CHAR = 30
 GATILHO_ORIGINAL_NS_POR_CHAR = 155
 NORMALIZER_NS_POR_CHAR = 310
 
-CAMINHO = Path("benchmarks/resultados/dia_04_pii_N_10_000.txt")
+CAMINHO = Path(__file__).resolve().parent / "resultados" / "dia_04_pii_N_10_000.txt"
 
 
 class Resultado(TypedDict):
@@ -235,8 +236,11 @@ for tamanho in TAMANHOS:
         ),
     }
 
+commit = obter_commit(Path(__file__).resolve().parent)
+
 linhas_relatorio = [
     f"Data e Hora: {datetime.now(UTC).isoformat()}",
+    f"Commit: {commit}",
     f"Python: {platform.python_version()}",
     f"Plataforma: {platform.platform()}",
     f"Execuções (N): {N}",
