@@ -1,0 +1,113 @@
+BENCHMARK — DETECTOR DE PROMPT INJECTION
+========================================================================
+
+Data e Hora: 2026-10-01T13:51:35.948315+00:00
+Python: 3.14.3
+Plataforma: Windows-11-10.0.26200-SP0
+Execuções (N): 10000
+Aquecimento: 500
+Tamanhos nominais: (100, 1000, 5000, 10000, 30000)
+Gatilho atual: 30 ns/caractere
+Custo normalizer: 310 ns/caractere
+
+PREVISÕES REGISTRADAS ANTES DA MEDIÇÃO:
+- Texto limpo: ~14 ns/char
+- Custo marginal por marcador: ~2.0–2.5 µs
+- 30.000 chars + 10 marcadores: ~0.44 ms
+- 30.000 chars + densidade de log: ~0.90 ms
+
+RESULTADOS:
+
+Tamanho | Cenário       | Chars reais | P50 (ns) | P95 (ns) | P99 (ns) | Findings | P50/char
+--------|---------------|-------------|----------|----------|----------|----------|----------
+    100 | limpo         |         100 |     1000 |     2000 |     2300 |        0 |    10.00
+    100 | marcadores    |         240 |    20200 |    37400 |    55200 |       10 |    84.17
+    100 | colchete      |         100 |      600 |      800 |      900 |        0 |     6.00
+
+   1000 | limpo         |        1000 |     4600 |     5800 |     9500 |        0 |     4.60
+   1000 | marcadores    |        1140 |    23200 |    39400 |    54000 |       10 |    20.35
+   1000 | colchete      |        1039 |    14100 |    21700 |    42700 |        5 |    13.57
+
+   5000 | limpo         |        5000 |    13000 |    38100 |    39700 |        0 |     2.60
+   5000 | marcadores    |        5140 |    32800 |    98500 |   109700 |       10 |     6.38
+   5000 | colchete      |        5238 |    71000 |   187100 |   216100 |       28 |    13.55
+
+  10000 | limpo         |       10000 |    25300 |    74900 |    86600 |        0 |     2.53
+  10000 | marcadores    |       10140 |    49400 |   137100 |   164600 |       10 |     4.87
+  10000 | colchete      |       10476 |   139600 |   394200 |   439300 |       56 |    13.33
+
+  30000 | limpo         |       30000 |    72900 |   146800 |   210000 |        0 |     2.43
+  30000 | marcadores    |       30140 |    94200 |   232600 |   287700 |       10 |     3.13
+  30000 | colchete      |       31428 |   408100 |   652700 |  1155000 |      168 |    12.99
+
+COMPARAÇÃO COM O GATILHO
+------------------------------------------------------------------------
+100 chars | Detector/gatilho: 33.33% | Detector/normalizer: 3.23%
+1000 chars | Detector/gatilho: 15.33% | Detector/normalizer: 1.48%
+5000 chars | Detector/gatilho: 8.67% | Detector/normalizer: 0.84%
+10000 chars | Detector/gatilho: 8.43% | Detector/normalizer: 0.82%
+30000 chars | Detector/gatilho: 8.10% | Detector/normalizer: 0.78%
+
+CUSTOS MARGINAIS
+------------------------------------------------------------------------
+O baseline utilizado no cálculo marginal possui o mesmo
+comprimento real do cenário adversarial.
+
+100 chars nominais | Marcadores: 10 findings | Base pareada: 240 chars | Custo marginal: 1.92 µs/marcador
+100 chars nominais | Colchete: nenhum marcador comportado pela densidade de 1 marcador a cada 30 palavras.
+1000 chars nominais | Marcadores: 10 findings | Base pareada: 1140 chars | Custo marginal: 2.01 µs/marcador
+1000 chars nominais | Colchete: 5 findings | Base pareada: 1039 chars | Custo marginal: 2.24 µs/marcador
+5000 chars nominais | Marcadores: 10 findings | Base pareada: 5140 chars | Custo marginal: 1.46 µs/marcador
+5000 chars nominais | Colchete: 28 findings | Base pareada: 5238 chars | Custo marginal: 2.05 µs/marcador
+10000 chars nominais | Marcadores: 10 findings | Base pareada: 10140 chars | Custo marginal: 2.42 µs/marcador
+10000 chars nominais | Colchete: 56 findings | Base pareada: 10476 chars | Custo marginal: 2.03 µs/marcador
+30000 chars nominais | Marcadores: 10 findings | Base pareada: 30140 chars | Custo marginal: 2.14 µs/marcador
+30000 chars nominais | Colchete: 168 findings | Base pareada: 31428 chars | Custo marginal: 1.98 µs/marcador
+
+COMPARAÇÃO COM AS PREVISÕES
+------------------------------------------------------------------------
+
+1. Texto limpo
+   Previsto: ~14 ns/char
+   Medido:   2.43 ns/char
+
+2. Custo marginal por marcador
+   Previsto: ~2.0–2.5 µs/marcador
+   Medido:   2.14 µs/marcador
+
+3. Texto nominal de 30.000 chars com 10 marcadores
+   Previsto: ~0.44 ms
+   Medido:   0.094 ms
+   Tamanho real medido: 30140 chars
+
+4. Texto nominal de 30.000 chars com densidade de log
+   Previsto: ~0.90 ms
+   Medido:   0.408 ms
+   Tamanho real medido: 31428 chars
+
+OBSERVAÇÕES
+------------------------------------------------------------------------
+A normalização não faz parte da região cronometrada.
+O benchmark mede exclusivamente InjectionDetector.inspect().
+
+O custo por caractere utiliza o comprimento real do texto
+cronometado, e não o tamanho nominal solicitado na criação.
+
+Para o custo marginal, o texto limpo de referência possui
+o mesmo número de caracteres do cenário que contém marcadores.
+Isso reduz a influência do custo adicional da varredura causada
+pelo crescimento do texto durante a inserção dos marcadores.
+
+No cenário de colchetes, tamanhos pequenos podem não possuir
+palavras suficientes para comportar a densidade de um marcador
+a cada 30 palavras. Nesses casos, o cenário apresenta zero
+Findings e não é utilizado para inferir custo marginal.
+
+CONCLUSÃO
+------------------------------------------------------------------------
+O benchmark mede separadamente o custo da varredura do detector
+e o custo adicional associado à presença de múltiplos Findings.
+
+Os resultados devem ser combinados com as medições anteriores
+do normalizador e dos demais componentes para estimar a latência
+total do Engine.
