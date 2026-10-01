@@ -111,7 +111,7 @@ def test_dois_delimitadores_geram_dois_findings():
 
 @pytest.mark.xfail(
     strict=True,
-    reason="A regra de delimitadores ainda exige uma letra maiúscula no " \
+    reason="A regra de delimitadores ainda exige uma letra maiúscula no "
     "primeiro caractere do marcador entre colchetes.",
 )
 def test_delimitador_bracket_com_primeiro_digito():
