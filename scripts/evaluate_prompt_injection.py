@@ -20,7 +20,9 @@ class CorpusCase(TypedDict):
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 CORPUS_PATH = ROOT_DIR / "datasets" / "prompt_injection_corpus.jsonl"
-RESULT_PATH = ROOT_DIR / "benchmarks" / "resultados" / "dia_06_prompt_injection_evaluation.txt"
+RESULT_PATH = (
+    ROOT_DIR / "benchmarks" / "resultados" / "dia_06_prompt_injection_evaluation.txt"
+)
 
 
 def load_corpus() -> list[CorpusCase]:
