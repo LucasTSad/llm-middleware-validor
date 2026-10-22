@@ -6,7 +6,7 @@ Os documentos completos ficam nesta mesma pasta. Este índice não os substitui:
 
 As capturas de tela em `evidencias/` registram execuções de teste usadas como evidência em ADRs específicos.
 
-**Os números medidos não são repetidos aqui, de propósito.** Eles ficam em dois lugares apenas: o ADR correspondente, que guarda a medição original com seu contexto e sua procedência, e a seção 2 do [`STATUS.md`](../../STATUS.md), que consolida os valores atuais. Uma terceira cópia divergiria na primeira remedição, e uma medição final consolidada já está planejada.
+**Os números medidos não são repetidos aqui, de propósito.** Cada valor fica no ADR que o mediu, junto do contexto e da procedência que o sustentam. Uma segunda cópia divergiria na primeira remedição, e uma medição final consolidada já está planejada.
 
 ## Visão geral
 
@@ -120,7 +120,7 @@ Uma `Action` nova sem prioridade registrada causa erro na hora, de propósito: �
 
 **O que isso obriga.** Como a severidade é `MEDIUM` (20) e o limiar de bloqueio é `HIGH` (30), uma família só bloqueia se o score dela alcançar 0.7. Toda família nova precisa declarar esse score de propósito.
 
-**O resultado, sem suavizar.** No corpus de 16 casos, a regra isolada bloqueou **mais texto legítimo do que ataque** — contribuição líquida negativa. É esse resultado que justifica implementar as famílias restantes, e ele é o ponto de partida honesto da avaliação. Contagens na seção 3 do [`STATUS.md`](../../STATUS.md).
+**O resultado, sem suavizar.** No corpus de 16 casos, a regra isolada bloqueou **mais texto legítimo do que ataque** — contribuição líquida negativa. É esse resultado que justifica implementar as famílias restantes, e ele é o ponto de partida honesto da avaliação. As contagens estão no ADR e no artefato `dia_06_prompt_injection_evaluation.txt`.
 
 **Limitação assumida.** A forma de colchetes é ampla e casa `[OK]`, `[TODO]`, `[ERROR]`. Num texto técnico longo ela produz ocorrências às dezenas. Custo e falso positivo são o mesmo fenômeno: um padrão que casa demais bloqueia demais.
 
@@ -138,5 +138,3 @@ Se precisar retomar o projeto rápido, a sequência mínima é:
 4. **0007** — o resultado de injection e por que ele ainda é negativo (explica o que falta fazer).
 
 O 0004 e o 0005 são o caminho de PII, e o 0002 é histórico.
-
-O estado atual do projeto, com o que falta e o que foi cortado, está em [`STATUS.md`](../../STATUS.md) na raiz do repositório.
