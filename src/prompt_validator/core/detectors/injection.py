@@ -34,12 +34,14 @@ DELIMITER_PATTERN = re.compile(
     + _CLOSING_SYSTEM_PATTERN
 )
 
+
 class RuleSpec(NamedTuple):
     family: str
     rule_id: str
     pattern: re.Pattern[str]
     score: float
     severity: Severity
+
 
 _SPECS: tuple[RuleSpec, ...] = (
     RuleSpec(
@@ -51,6 +53,7 @@ _SPECS: tuple[RuleSpec, ...] = (
     ),
 )
 
+
 class InjectionDetector:
     name = "injection"
 
@@ -61,7 +64,8 @@ class InjectionDetector:
         for spec in _SPECS:
             for match in spec.pattern.finditer(normalized_text.normalized):
                 start, end = normalized_text.to_original_span(
-                    match.start(), match.end())
+                    match.start(), match.end()
+                )
 
                 findings.append(
                     Finding(

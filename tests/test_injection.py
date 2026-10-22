@@ -122,9 +122,11 @@ def test_delimitador_bracket_com_primeiro_digito():
 
     assert findings
 
+
 def test_specs_sao_tupla_na_ordem_declarada():
     assert isinstance(_SPECS, tuple)
     assert [spec.rule_id for spec in _SPECS] == ["injection.delimiter.v1"]
+
 
 def test_rule_id_concorda_com_a_familia():
     for spec in _SPECS:
