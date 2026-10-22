@@ -1,4 +1,5 @@
 import re
+from typing import NamedTuple
 
 from prompt_validator.core.contracts import (
     Category,
@@ -33,6 +34,22 @@ DELIMITER_PATTERN = re.compile(
     + _CLOSING_SYSTEM_PATTERN
 )
 
+class RuleSpec(NamedTuple):
+    family: str
+    rule_id: str
+    pattern: re.Pattern[str]
+    score: float
+    severity: Severity
+
+_SPECS: tuple[RuleSpec, ...] = (
+    RuleSpec(
+        family="delimiter",
+        rule_id="injection.delimiter.v1",
+        pattern=DELIMITER_PATTERN,
+        score=0.9,
+        severity=Severity.MEDIUM,
+    ),
+)
 
 class InjectionDetector:
     name = "injection"
@@ -41,19 +58,22 @@ class InjectionDetector:
         self, normalized_text: NormalizedText, config: GuardConfig
     ) -> list[Finding]:
         findings: list[Finding] = []
-        for match in DELIMITER_PATTERN.finditer(normalized_text.normalized):
-            start, end = normalized_text.to_original_span(match.start(), match.end())
+        for spec in _SPECS:
+            for match in spec.pattern.finditer(normalized_text.normalized):
+                start, end = normalized_text.to_original_span(
+                    match.start(), match.end())
 
-            findings.append(
-                Finding(
-                    rule_id="injection.delimiter.v1",
-                    category=Category.PROMPT_INJECTION,
-                    severity=Severity.MEDIUM,
-                    start=start,
-                    end=end,
-                    matched_type="delimiter",
-                    score=0.9,
+                findings.append(
+                    Finding(
+                        rule_id=spec.rule_id,
+                        category=Category.PROMPT_INJECTION,
+                        severity=spec.severity,
+                        start=start,
+                        end=end,
+                        matched_type=spec.family,
+                        score=spec.score,
+                    )
                 )
-            )
+        findings.sort(key=lambda finding: finding.start)
 
         return findings

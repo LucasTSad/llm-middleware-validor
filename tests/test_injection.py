@@ -1,7 +1,7 @@
 import pytest
 
 from prompt_validator.core.contracts import Category, GuardConfig, Severity
-from prompt_validator.core.detectors.injection import InjectionDetector
+from prompt_validator.core.detectors.injection import _SPECS, InjectionDetector
 from prompt_validator.core.normalizer import normalize
 
 
@@ -121,3 +121,11 @@ def test_delimitador_bracket_com_primeiro_digito():
     findings = InjectionDetector().inspect(normalized, GuardConfig())
 
     assert findings
+
+def test_specs_sao_tupla_na_ordem_declarada():
+    assert isinstance(_SPECS, tuple)
+    assert [spec.rule_id for spec in _SPECS] == ["injection.delimiter.v1"]
+
+def test_rule_id_concorda_com_a_familia():
+    for spec in _SPECS:
+        assert spec.rule_id.split(".")[1] == spec.family
