@@ -350,6 +350,44 @@ Qualquer alteração no corpus invalida os itens, que então precisam ser reemit
 
 O mesmo raciocínio justifica a separação de regimes declarada no início desta seção. O viés otimista cresce quando o resultado é conhecido antes do registro; nos itens 1 a 3 ele é, portanto, maior do que na previsão do dia 6, e o rótulo precisa dizer isso. A contenção disponível nesse regime não é o acerto, que é esperado, mas a cláusula de falsificação, que continua valendo como detector de regressão nas medições seguintes.
 
+## Retirada da especificação de `persona_switch`
+
+* **Data:** 22/10/2026.
+* **Especificação retirada:** a seção anterior, registrada no commit `4c543e0`.
+
+A seção anterior **não foi editada**. Ela permanece como registrada, e esta retirada é acrescentada abaixo dela, pelo mesmo critério aplicado ao ADR 0002: o documento substituído continua legível, para que a sequência das decisões possa ser verificada.
+
+### O que está sendo retirado
+
+A família `persona_switch` saiu do escopo. Com ela, saem os cinco itens da especificação anterior, incluindo a previsão de 4/8 de mitigação.
+
+Quatro afirmações precisam ficar explícitas:
+
+1. **A retirada é por modelo de ameaça, não por desempenho.** A família não foi reprovada: ela nunca chegou a ser avaliada.
+2. **Nenhum padrão foi implementado e nenhuma avaliação foi executada.** O detector nunca teve a família. Não existe medição a reportar.
+3. **Os resultados da sondagem preliminar permanecem válidos** como aquilo que sempre foram: a medição de uma forma candidata que não foi implementada. A seção anterior já declarava esse regime.
+4. **A previsão de 4/8 é retirada, não substituída.** Com a detecção de prompt injection encerrando na família `delimiter`, o resultado permanece o 2/8 já medido no dia 6, e não há previsão nova a registrar: nenhuma família foi acrescentada depois daquela medição. Trocar um número pelo outro em silêncio apagaria a diferença entre uma previsão retirada e uma previsão cumprida.
+
+### O motivo
+
+Um filtro determinístico de input não observa a **procedência** do texto. A mesma sequência — âncora temporal, verbo de assunção, papel privilegiado — é engenharia de prompt legítima quando o usuário a digita e é ataque quando chega colada de um e-mail, de um ticket ou de uma página.
+
+Como a string é idêntica nos dois casos, nenhuma regra sobre a string decide entre eles. As famílias cuja malícia depende da origem são, por construção, as que este filtro não consegue julgar.
+
+O critério que substitui a cobertura de corpus está registrado no ADR 0008.
+
+### O que sobrevive à retirada
+
+Um dado da sondagem contraria a intuição corrente e não deve ser descartado com a família: a forma lexical de três elementos produziu **0 falsos positivos em 8 casos legítimos**, contra **3 em 8** da família estrutural `delimiter`, que exige um único marcador.
+
+Ou seja, neste corpus, a regra lexical com conjunção de elementos foi mais precisa que a regra estrutural. É achado sobre a forma das regras, independente da família que o produziu, e permanece disponível para o capítulo de método.
+
+### Trabalho futuro
+
+A retirada é condicionada ao desenho atual, e não um descarte definitivo.
+
+Se a arquitetura passar a distinguir segmentos confiáveis de não confiáveis — texto digitado pelo usuário contra texto colado ou anexado — a família volta a fazer sentido, aplicada somente ao segmento não confiável. Nesse cenário, a especificação retirada é o ponto de partida, e a sondagem registrada continua sendo a medição preliminar dela.
+
 ## PII
 
 O corpus não contém dados pessoais reais.

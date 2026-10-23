@@ -26,3 +26,4 @@ samconfig.toml
 Thumbs.db
 desktop.ini
 STATUS.md
+docs/adr/README.md
