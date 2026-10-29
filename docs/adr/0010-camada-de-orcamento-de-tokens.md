@@ -79,6 +79,8 @@ A regra vira invariante em `validate_coherence`, espelhando a que já existe par
 
 Para que estado inválido deixe de ser representável, o `validate_coherence` não basta: ele roda na construção, e a `Decision` é o único dos quatro modelos sem `frozen=True`, de modo que uma atribuição posterior escapa da validação. A invariante é, portanto, `validate_coherence` **mais** `frozen=True` na `Decision` — e congelar também protege as medições que ela carrega, já que a trilha de auditoria do ADR 0008 é gravada a partir dela.
 
+Esta cláusula não é satisfazível isoladamente: a invariante afirma algo sobre um valor que só a contagem da cláusula 1 produz, e no caminho `SANITIZE` não existe valor admissível antes dela. **As cláusulas 1, 2 e 4 são interdependentes.**
+
 ### 5. O encoder é injetado na fronteira do `Engine`
 
 `tiktoken.get_encoding()` lê o encoding de cache em disco na primeira chamada, e recorre à rede se o cache estiver ausente. Isso é I/O, que o ADR 0001 proíbe no núcleo.
