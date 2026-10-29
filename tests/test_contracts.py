@@ -6,6 +6,7 @@ from prompt_validator.core.contracts import (
     Category,
     Decision,
     Finding,
+    GuardConfig,
     NormalizedText,
     Severity,
 )
@@ -148,3 +149,25 @@ def test_normalized_text_to_original_span_rejeitada_end_fora_do_mapa():
 
     with pytest.raises(ValueError, match=r"end fora dos limites do texto normalizado"):
         n.to_original_span(2, 7)
+
+
+def test_decision_e_imutavel():
+    d = Decision(action=Action.ALLOW, token_count=10)
+    with pytest.raises(ValidationError):
+        d.token_count = 999
+
+
+def test_decision_sem_preco_configurado_nao_afirma_custo():
+    d = Decision(action=Action.ALLOW)
+    assert d.estimated_cost_usd is None
+    assert d.token_delta is None
+
+
+def test_token_delta_aceita_negativo():
+    # mascarar pode encarecer (ADR 0010): o campo nao tem ge de proposito
+    d = Decision(action=Action.ALLOW, sanitized_text=None, token_delta=-3)
+    assert d.token_delta == -3
+
+
+def test_config_sem_preco_declarado_nao_assume_gratuito():
+    assert GuardConfig().price_per_1k_tokens_usd is None

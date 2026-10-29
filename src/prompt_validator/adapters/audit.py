@@ -15,7 +15,7 @@ class RecordAudit(TypedDict):
     token_count: int
     total_findings: int
     findings: list[dict[str, object]]
-    estimated_cost_usd: float
+    estimated_cost_usd: float | None
     elapsed_ns: int
 
 

@@ -216,6 +216,10 @@ def test_builder_detectors_rejeita_nome_desconhecido():
         build_detectors(GuardConfig(enabled_detectors=("pil",)))
 
 
+def test_builder_detectors_aceita_default():
+    assert build_detectors(GuardConfig())
+
+
 def test_engine_libera_null():
     engine = Engine([NullDetector()], GuardConfig())
     decision = engine.analyze("meu cpf e 123.456.789-09")

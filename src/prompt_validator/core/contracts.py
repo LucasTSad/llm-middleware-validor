@@ -105,6 +105,8 @@ class NormalizedText(BaseModel):
 
 
 class Decision(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     action: Action
     findings: tuple[Finding, ...] = ()
 
@@ -124,7 +126,14 @@ class Decision(BaseModel):
     )
 
     token_count: int = Field(default=0, ge=0)
-    estimated_cost_usd: float = Field(default=0.0, ge=0.0)
+    token_delta: int | None = Field(
+        default=None,
+        description=(
+            "Economia de tokens do mascaramento, em tokens. Negativo quando "
+            "mascarar encarece. None quando nao houve mascaramento."
+        ),
+    )
+    estimated_cost_usd: float | None = Field(default=None, ge=0.0)
     elapsed_ns: int = Field(default=0, ge=0)
 
     @model_validator(mode="after")
@@ -154,6 +163,6 @@ class GuardConfig(BaseModel):
     normalize_input: bool = True
 
     encoding_name: str = Field(default="o200k_base")
-    price_per_1k_tokens_usd: float = Field(default=0.0, ge=0.0)
+    price_per_1k_tokens_usd: float | None = Field(default=None, ge=0.0)
 
-    enabled_detectors: tuple[str, ...] = ("budget", "pii", "injection")
+    enabled_detectors: tuple[str, ...] = ("pii", "injection")
