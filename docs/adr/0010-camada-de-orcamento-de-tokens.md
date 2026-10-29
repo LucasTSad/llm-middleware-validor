@@ -75,7 +75,9 @@ A aritmética que liga os três fica declarada, para que a trilha não exija adi
 
 `token_delta` é `None` quando não houve mascaramento, e a distinção tem critério: `placeholders` é **coleção**, e vazia significa "nada dentro", que é bem definido; `sanitized_text` e o delta são **valores**, e `None` significa "não existe". No caminho `ALLOW` não existe segundo texto para contar, logo a economia não é zero — é indefinida.
 
-A regra vira invariante em `validate_coherence`, espelhando a que já existe para `sanitized_text`: **`token_delta` não é `None` se e somente se houve mascaramento.** Estado inválido deixa de ser representável.
+A regra vira invariante em `validate_coherence`, espelhando a que já existe para `sanitized_text`: **`token_delta` não é `None` se e somente se houve mascaramento.**
+
+Para que estado inválido deixe de ser representável, o `validate_coherence` não basta: ele roda na construção, e a `Decision` é o único dos quatro modelos sem `frozen=True`, de modo que uma atribuição posterior escapa da validação. A invariante é, portanto, `validate_coherence` **mais** `frozen=True` na `Decision` — e congelar também protege as medições que ela carrega, já que a trilha de auditoria do ADR 0008 é gravada a partir dela.
 
 ### 5. O encoder é injetado na fronteira do `Engine`
 
