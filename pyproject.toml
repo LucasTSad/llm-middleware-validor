@@ -34,3 +34,6 @@ select = [
     "F",  # Pyflakes
     "I",  # isort
 ]
+
+[tool.mypy]
+files = ["src", "benchmarks", "scripts"]
