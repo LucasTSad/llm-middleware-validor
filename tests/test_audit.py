@@ -27,9 +27,9 @@ VOLATEIS = {"id", "time", "elapsed_ns"}
 
 
 @pytest.fixture
-def engine():
+def engine(encoder):
     config = GuardConfig(enabled_detectors=("pii",))
-    return Engine(build_detectors(config), config)
+    return Engine(build_detectors(config), config, encoder)
 
 
 @pytest.fixture

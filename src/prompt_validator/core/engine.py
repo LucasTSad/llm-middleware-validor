@@ -13,6 +13,7 @@ from prompt_validator.core.detectors.base import Detector
 from prompt_validator.core.detectors.injection import InjectionDetector
 from prompt_validator.core.detectors.null import NullDetector
 from prompt_validator.core.detectors.pii import PiiDetector
+from prompt_validator.core.encoder import Encoder
 from prompt_validator.core.masker import mask
 from prompt_validator.core.normalizer import normalize
 
@@ -73,12 +74,17 @@ def build_detectors(config: GuardConfig) -> list[Detector]:
 
 
 class Engine:
-    def __init__(self, detectors: list[Detector], config: GuardConfig) -> None:
+    def __init__(
+        self, detectors: list[Detector], config: GuardConfig, encoder: Encoder
+    ) -> None:
         self._config = config
         self._detectors = detectors
+        self._encoder = encoder
 
     def analyze(self, text: str) -> Decision:
         start = time.perf_counter_ns()
+
+        token_count = len(self._encoder.encode(text))
 
         normalized = normalize(text, self._config)
 
@@ -112,6 +118,7 @@ class Engine:
         return Decision(
             action=action,
             findings=tuple(all_findings),
+            token_count=token_count,
             elapsed_ns=elapsed_ns,
             sanitized_text=masked_text,
             placeholders=placeholders,

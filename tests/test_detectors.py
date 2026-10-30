@@ -3,7 +3,7 @@ from prompt_validator.core.detectors.base import Detector
 from prompt_validator.core.detectors.null import NullDetector
 
 
-def test_null_detector_satisfaz_contrato():
+def test_null_detector_tem_o_metodo_inspect():
     assert isinstance(NullDetector(), Detector)
 
 

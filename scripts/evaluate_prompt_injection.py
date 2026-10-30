@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 from typing import TypedDict
 
+from prompt_validator.adapters.tiktoken_encoder import build_encoder
 from prompt_validator.core.contracts import Action, Decision, GuardConfig
 from prompt_validator.core.engine import Engine, build_detectors
 from prompt_validator.provenance import obter_commit
@@ -54,7 +55,7 @@ commit = obter_commit(Path(__file__).resolve().parent)
 
 def evaluate(cases: list[CorpusCase]) -> str:
     config = GuardConfig(enabled_detectors=("injection",))
-    engine = Engine(build_detectors(config), config)
+    engine = Engine(build_detectors(config), config, build_encoder(config))
 
     attacks = [case for case in cases if case["label"] == "ataque"]
     legitimate = [case for case in cases if case["label"] == "legitimo"]

@@ -36,6 +36,7 @@ from pathlib import Path
 
 from calcular_percentis import calcular_percentis
 
+from prompt_validator.adapters.tiktoken_encoder import build_encoder
 from prompt_validator.core.contracts import GuardConfig
 from prompt_validator.core.engine import Engine, build_detectors
 
@@ -53,7 +54,8 @@ CAMINHO = Path("benchmarks/resultados/dia_02_null.txt")
 
 config = GuardConfig(enabled_detectors=("null",))
 detectores = build_detectors(config)
-engine = Engine(detectores, config)
+encoder = build_encoder(config)
+engine = Engine(detectores, config, encoder)
 
 for _ in range(AQUECIMENTO):
     engine.analyze(TEXTO)
