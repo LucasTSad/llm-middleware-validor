@@ -52,14 +52,18 @@ elif self.action is Action.BLOCK and not self.findings:
 
 Portanto, quando `token_count > max_tokens`, o `Engine` constrói um `Finding` de `BUDGET_EXCEEDED` e o acrescenta a `all_findings` **antes** de `decide_action`. A precedência por máximo de ações resolve a combinação sem caso especial.
 
-Duas propriedades desse `Finding` são arbitrárias e por isso ficam declaradas:
+Quatro propriedades desse `Finding` são arbitrárias e por isso ficam declaradas. As quatro vão para a trilha de auditoria do ADR 0008, que é artefato de evidência, e por isso nenhuma delas pode ser escolhida no código sem registro:
 
 * **span `0` a `len(original)`.** Excesso de orçamento é propriedade do texto inteiro, não de uma posição. O `validate_span` exige `end > start`, então um span vazio não é representável, e o texto todo é a única escolha honesta. Na trilha de auditoria esse par será lido como localização: é o custo de o contrato não distinguir fato localizado de fato global.
 
   O sistema de coordenadas é o mesmo de todos os outros `Finding`: `pii.py` e `injection.py` chamam `to_original_span` antes de construir, de modo que nenhum `Finding` do sistema indexa o texto normalizado. É para isso que o ADR 0003 existe, e por isso `len(original)` não pode cair fora de nada — a expansão NFKC altera o comprimento do normalizado e não alcança esse span.
 
   A borda de `original` vazio — `end = 0`, que violaria o `gt=0` — é **inalcançável**: `max_tokens` tem `gt=0`, logo vale no mínimo 1, e texto vazio conta 0 tokens, que nunca é maior que 1. Fica registrado para que ninguém acrescente guarda defensiva depois contra estado que não ocorre;
-* **`severity` é inerte.** Por `action_for_finding`, severidade alta bloqueia na primeira condição e qualquer outro valor cai no `return Action.BLOCK` final. Para a categoria `BUDGET_EXCEEDED` toda severidade bloqueia, e o valor escolhido não altera comportamento. Fica `MEDIUM`, por acompanhar `test_categoria_budget_exceeded_block`, com o registro de que a escolha é convencional.
+* **`severity` é inerte.** Por `action_for_finding`, severidade alta bloqueia na primeira condição e qualquer outro valor cai no `return Action.BLOCK` final. Para a categoria `BUDGET_EXCEEDED` toda severidade bloqueia, e o valor escolhido não altera comportamento. Fica `MEDIUM`, por acompanhar `test_categoria_budget_exceeded_block`, com o registro de que a escolha é convencional;
+
+* **`rule_id` é `budget.max_tokens.v1`**, seguindo a convenção dos outros dois — `pii.cpf.v1` e `injection.delimiter.v1`. Importa declarar porque o `rule_id` é identificador **estável e persistido**: trocá-lo depois quebra a comparabilidade entre trilhas gravadas em momentos diferentes. O sufixo `.v1` já insinua versionamento, e nada no projeto declara essa convenção — fica registrado que ele existe e que mudar a regra sem mudar o sufixo é o que torna duas trilhas incomparáveis em silêncio;
+
+* **`matched_type` é `"max_tokens"`, e isso estica o campo.** O `Finding` documenta `matched_type` como "tipo concreto, ex: 'cpf', 'api_key'" — tipo do **dado encontrado**. Orçamento não encontra dado. É a mesma forma de problema do span: campo projetado para fato localizado e portador de dado, reusado para fato global. O projeto paga o custo em vez de criar campo novo para uma categoria, e declara que na trilha um consumidor vai ler `"max_tokens"` como se fosse tipo de dado.
 
 Esse é o mesmo custo que um detector pagaria, e é por isso que ele não figura entre os motivos da cláusula 1.
 
