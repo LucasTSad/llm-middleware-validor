@@ -96,6 +96,7 @@ class Engine:
         action = decide_action(all_findings, self._config)
 
         masked_text: str | None = None
+        token_delta: int | None = None
         placeholders: dict[str, str] = {}
 
         if action == Action.SANITIZE:
@@ -112,6 +113,8 @@ class Engine:
                 text, tuple(maskable_findings), self._config
             )
 
+            token_delta = token_count - len(self._encoder.encode(masked_text))
+
         end = time.perf_counter_ns()
         elapsed_ns = end - start
 
@@ -119,6 +122,7 @@ class Engine:
             action=action,
             findings=tuple(all_findings),
             token_count=token_count,
+            token_delta=token_delta,
             elapsed_ns=elapsed_ns,
             sanitized_text=masked_text,
             placeholders=placeholders,

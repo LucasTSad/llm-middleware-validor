@@ -1,5 +1,6 @@
 import pytest
 
+from prompt_validator.adapters.tiktoken_encoder import build_encoder
 from prompt_validator.core.contracts import (
     Action,
     Category,
@@ -410,3 +411,21 @@ def test_engine_conta_tokens_no_caminho_sanitize(encoder):
 
     assert decision.action == Action.SANITIZE
     assert decision.token_count > 0
+
+
+def test_engine_delta_e_nome_sem_mascaramento(encoder):
+    engine = Engine([NullDetector()], GuardConfig(), encoder)
+
+    decision = engine.analyze("texto limpo")
+
+    assert decision.action == Action.ALLOW
+    assert decision.token_delta is None
+
+
+def test_engine_mascarar_pode_encarecer():
+    config = GuardConfig()
+    engine = Engine([PiiDetector()], config, build_encoder(config))
+
+    decision = engine.analyze("52998224725")
+
+    assert decision.token_delta == -1
