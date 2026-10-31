@@ -146,6 +146,16 @@ class Decision(BaseModel):
             raise ValueError("sanitized_text deve ser None quando action == BLOCK")
         elif self.action is Action.BLOCK and not self.findings:
             raise ValueError("findings nao pode ser vazio quando action == BLOCK")
+        elif self.action is Action.ALLOW and self.sanitized_text is not None:
+            raise ValueError("sanitized_text deve ser None quando action == ALLOW")
+
+        if self.action is Action.SANITIZE and self.token_delta is None:
+            raise ValueError(
+                "token_delta deve ser preenchido quando action == SANITIZE"
+            )
+        if self.action is not Action.SANITIZE and self.token_delta is not None:
+            raise ValueError("token_delta deve ser None quando action != SANITIZE")
+
         return self
 
     @property

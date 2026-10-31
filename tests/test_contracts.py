@@ -67,9 +67,35 @@ def test_block_nao_carrega_texto_sanitizado():
         Decision(action=Action.BLOCK, findings=(finding(),), sanitized_text="teste")
 
 
+def test_allow_nao_carrega_texto_sanitizado():
+    with pytest.raises(ValidationError):
+        Decision(action=Action.ALLOW, sanitized_text="teste")
+
+
 def test_sanitize_exige_texto():
     with pytest.raises(ValidationError):
         Decision(action=Action.SANITIZE, findings=(finding(),))
+
+
+def test_sanitize_exige_token_delta():
+    with pytest.raises(ValidationError):
+        Decision(
+            action=Action.SANITIZE,
+            findings=(finding(),),
+            sanitized_text="texto mascarado",
+        )
+
+
+@pytest.mark.parametrize(
+    "decision_kwargs",
+    [
+        {"action": Action.ALLOW},
+        {"action": Action.BLOCK, "findings": (finding(),)},
+    ],
+)
+def test_sem_mascaramento_nao_carrega_token_delta(decision_kwargs):
+    with pytest.raises(ValidationError):
+        Decision(token_delta=0, **decision_kwargs)
 
 
 def test_placeholders_nao_vazam_na_serializacao():
@@ -78,6 +104,7 @@ def test_placeholders_nao_vazam_na_serializacao():
         findings=(finding(),),
         sanitized_text="meu cpf e [[PII_CPF_1]]",
         placeholders={"[[PII_CPF_1]]": "123.456.789-10"},
+        token_delta=0,
     )
     assert "123.456.789-10" not in d.model_dump_json()
 
@@ -165,7 +192,12 @@ def test_decision_sem_preco_configurado_nao_afirma_custo():
 
 def test_token_delta_aceita_negativo():
     # mascarar pode encarecer (ADR 0010): o campo nao tem ge de proposito
-    d = Decision(action=Action.ALLOW, sanitized_text=None, token_delta=-3)
+    d = Decision(
+        action=Action.SANITIZE,
+        findings=(finding(),),
+        sanitized_text="meu cpf e [CPF_1]",
+        token_delta=-3,
+    )
     assert d.token_delta == -3
 
 
