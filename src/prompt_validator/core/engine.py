@@ -8,6 +8,7 @@ from prompt_validator.core.contracts import (
     Decision,
     Finding,
     GuardConfig,
+    Severity,
 )
 from prompt_validator.core.detectors.base import Detector
 from prompt_validator.core.detectors.injection import InjectionDetector
@@ -93,6 +94,18 @@ class Engine:
             findings = d.inspect(normalized, self._config)
             all_findings.extend(findings)
 
+        if token_count > self._config.max_tokens:
+            all_findings.append(
+                Finding(
+                    rule_id="budget.max_tokens.v1",
+                    category=Category.BUDGET_EXCEEDED,
+                    severity=Severity.MEDIUM,
+                    start=0,
+                    end=len(text),
+                    matched_type="max_tokens",
+                )
+            )
+
         action = decide_action(all_findings, self._config)
 
         masked_text: str | None = None
@@ -115,6 +128,17 @@ class Engine:
 
             token_delta = token_count - len(self._encoder.encode(masked_text))
 
+        estimated_cost_usd: float | None = None
+        price = self._config.price_per_1k_tokens_usd
+
+        if price is not None:
+            if token_delta is None:
+                sent = token_count
+            else:
+                sent = token_count - token_delta
+
+            estimated_cost_usd = sent / 1_000 * price
+
         end = time.perf_counter_ns()
         elapsed_ns = end - start
 
@@ -123,6 +147,7 @@ class Engine:
             findings=tuple(all_findings),
             token_count=token_count,
             token_delta=token_delta,
+            estimated_cost_usd=estimated_cost_usd,
             elapsed_ns=elapsed_ns,
             sanitized_text=masked_text,
             placeholders=placeholders,

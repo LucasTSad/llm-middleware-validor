@@ -429,3 +429,72 @@ def test_engine_mascarar_pode_encarecer():
     decision = engine.analyze("52998224725")
 
     assert decision.token_delta == -1
+
+
+def test_engine_bloqueia_acima_do_teto(encoder):
+    engine = Engine([NullDetector()], GuardConfig(max_tokens=5), encoder)
+
+    decision = engine.analyze("texto bem maior que cinco tokens")
+
+    assert decision.action == Action.BLOCK
+    assert len(decision.findings) == 1
+    assert decision.findings[0].category == Category.BUDGET_EXCEEDED
+    assert decision.findings[0].rule_id == "budget.max_tokens.v1"
+
+
+def test_engine_span_do_excesso_cobre_o_texto_inteiro(encoder):
+    texto = "texto bem maior que cinco tokens"
+    engine = Engine([NullDetector()], GuardConfig(max_tokens=5), encoder)
+
+    finding = engine.analyze(texto).findings[0]
+
+    assert (finding.start, finding.end) == (0, len(texto))
+
+
+def test_engine_sem_preco_nao_afirma_custo(encoder):
+    engine = Engine([NullDetector()], GuardConfig(), encoder)
+
+    assert engine.analyze("texto limpo").estimated_cost_usd is None
+
+
+def test_engine_custo_estimado_usa_o_texto_enviado(encoder):
+    texto = "Meu CPF é 529.982.247-25"
+    config = GuardConfig(price_per_1k_tokens_usd=2.0)
+    engine = Engine([PiiDetector()], config, encoder)
+
+    decision = engine.analyze(texto)
+
+    assert decision.action == Action.SANITIZE
+    enviados = decision.token_count - decision.token_delta
+    assert decision.estimated_cost_usd == pytest.approx(enviados / 1_000 * 2.0)
+
+
+def test_engine_bloqueia_mesmo_com_pii_no_texto(encoder):
+    texto = "Meu CPF é 529.982.247-25"
+    engine = Engine([PiiDetector()], GuardConfig(max_tokens=5), encoder)
+
+    decision = engine.analyze(texto)
+
+    assert decision.action == Action.BLOCK
+    assert decision.sanitized_text is None
+    assert decision.token_delta is None
+    assert len(decision.findings) == 2
+
+
+def test_engine_custo_estimado_sem_mascaramento(encoder):
+    texto = "texto limpo"
+    config = GuardConfig(price_per_1k_tokens_usd=2.0)
+    engine = Engine([NullDetector()], config, encoder)
+
+    decision = engine.analyze(texto)
+    esperado = len(encoder.encode(texto)) / 1_000 * 2.0
+
+    assert decision.action == Action.ALLOW
+    assert decision.token_delta is None
+    assert decision.estimated_cost_usd == pytest.approx(esperado)
+
+
+def test_engine_no_teto_exato_nao_bloqueia(encoder):
+    engine = Engine([NullDetector()], GuardConfig(max_tokens=5), encoder)
+
+    assert engine.analyze("12345").action == Action.ALLOW
