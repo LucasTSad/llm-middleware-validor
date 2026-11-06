@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sys
 from pathlib import Path
 from typing import TypedDict
 
 from prompt_validator.adapters.tiktoken_encoder import build_encoder
 from prompt_validator.core.contracts import Action, Decision, GuardConfig
 from prompt_validator.core.engine import Engine, build_detectors
-from prompt_validator.provenance import obter_commit
+from prompt_validator.provenance import get_commit, get_output_path
 
 
 class CorpusCase(TypedDict):
@@ -21,8 +22,10 @@ class CorpusCase(TypedDict):
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 CORPUS_PATH = ROOT_DIR / "datasets" / "prompt_injection_corpus.jsonl"
-RESULT_PATH = (
-    ROOT_DIR / "benchmarks" / "resultados" / "dia_06_prompt_injection_evaluation.txt"
+RESULT_PATH = get_output_path(
+    "dia_06_prompt_injection_evaluation",
+    ROOT_DIR / "benchmarks",
+    "--oficial" in sys.argv,
 )
 
 
@@ -50,7 +53,7 @@ def rule_family(rule_id: str) -> str:
     return parts[1]
 
 
-commit = obter_commit(Path(__file__).resolve().parent)
+commit = get_commit(Path(__file__).resolve().parent)
 
 
 def evaluate(cases: list[CorpusCase]) -> str:

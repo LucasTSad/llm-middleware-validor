@@ -31,6 +31,7 @@ Execução:
 
 import platform
 import random
+import sys
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -40,7 +41,7 @@ from calcular_percentis import calcular_percentis
 
 from prompt_validator.core.contracts import GuardConfig
 from prompt_validator.core.normalizer import normalize
-from prompt_validator.provenance import obter_commit
+from prompt_validator.provenance import get_commit, get_output_path
 
 AQUECIMENTO = 500
 N = 10_000
@@ -56,8 +57,8 @@ TEXTO = (
 
 TAMANHOS = (100, 1_000, 10_000)
 
-CAMINHO = (
-    Path(__file__).resolve().parent / "resultados" / "dia_03_normalizer_N_10_000.txt"
+CAMINHO = get_output_path(
+    "dia_03_normalizer", Path(__file__).resolve().parent, "--oficial" in sys.argv, N
 )
 
 config = GuardConfig()
@@ -154,7 +155,7 @@ for tamanho in TAMANHOS:
         "nfkc": p95_nfkc / p95_ascii,
     }
 
-commit = obter_commit(Path(__file__).resolve().parent)
+commit = get_commit(Path(__file__).resolve().parent)
 
 linhas_relatorio = [
     f"Data e Hora: {datetime.now(UTC).isoformat()}",

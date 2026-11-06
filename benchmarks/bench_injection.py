@@ -68,6 +68,7 @@ Execução:
 """
 
 import platform
+import sys
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -78,7 +79,7 @@ from calcular_percentis import calcular_percentis
 from prompt_validator.core.contracts import GuardConfig, NormalizedText
 from prompt_validator.core.detectors.injection import InjectionDetector
 from prompt_validator.core.normalizer import normalize
-from prompt_validator.provenance import obter_commit
+from prompt_validator.provenance import get_commit, get_output_path
 
 AQUECIMENTO = 500
 N = 10_000
@@ -117,8 +118,8 @@ PREVISAO_CUSTO_MARGINAL_US_MAX = 2.5
 PREVISAO_30K_10_MS = 0.44
 PREVISAO_30K_LOG_MS = 0.90
 
-CAMINHO = (
-    Path(__file__).resolve().parent / "resultados" / "dia_06_injection_N_10_000.txt"
+CAMINHO = get_output_path(
+    "dia_06_injection", Path(__file__).resolve().parent, "--oficial" in sys.argv, N
 )
 
 
@@ -296,7 +297,7 @@ for tamanho in TAMANHOS:
         "custo_marginal_colchete": custo_marginal_colchete,
     }
 
-commit = obter_commit(Path(__file__).resolve().parent)
+commit = get_commit(Path(__file__).resolve().parent)
 
 linhas_relatorio = [
     "BENCHMARK — DETECTOR DE PROMPT INJECTION",
