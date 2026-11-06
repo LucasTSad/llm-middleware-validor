@@ -39,6 +39,7 @@ from calcular_percentis import calcular_percentis
 from prompt_validator.adapters.tiktoken_encoder import build_encoder
 from prompt_validator.core.contracts import GuardConfig
 from prompt_validator.core.engine import Engine, build_detectors
+from prompt_validator.provenance import obter_commit
 
 AQUECIMENTO = 500
 N = 10_000
@@ -49,7 +50,7 @@ TEXTO = (
     " de forma que os cpf e e-mails sejam mostrados na primeira coluna e os"
     " telefones na segunda."
 )
-CAMINHO = Path("benchmarks/resultados/dia_02_null.txt")
+CAMINHO = Path(__file__).resolve().parent / "resultados" / "dia_02_null.txt"
 
 
 config = GuardConfig(enabled_detectors=("null",))
@@ -75,8 +76,11 @@ p50_ext, p95_ext, p99_ext = calcular_percentis(tempo_externo)
 
 diferenca_p95 = p95_ext - p95_int
 
+commit = obter_commit(Path(__file__).resolve().parent)
+
 linhas_relatorio = [
     f"Data e Hora: {datetime.now(UTC).isoformat()}",
+    f"Commit: {commit}",
     f"Python: {platform.python_version()}",
     f"Plataforma: {platform.platform()}",
     f"Execuções (N): {N}",
